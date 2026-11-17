@@ -1,0 +1,43 @@
+{
+  "name": "devolve-erp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "description": "Devolve Motor Spares ERP - inventory, sales, quotations, credit, cashbook and journals",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vite",
+    "dev:api": "node --env-file=.env scripts/dev-api.mjs",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "db:setup": "node --env-file=.env scripts/neon-setup.mjs",
+    "db:check": "node --env-file=.env scripts/neon-check.mjs",
+    "verify": "npm run lint && npm run build"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "jspdf": "^3.0.1",
+    "lucide-react": "^0.511.0",
+    "nodemailer": "^10.0.15",
+    "pg": "^8.16.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@tailwindcss/vite": "^4.1.7",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.27.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.1.0",
+    "tailwindcss": "^4.1.7",
+    "vite": "^6.3.5"
+  }
+}

@@ -1,0 +1,117 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    'Inter var', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+
+  --color-brand-50: #fef3f2;
+  --color-brand-100: #fee4e2;
+  --color-brand-200: #fecdca;
+  --color-brand-300: #fda29b;
+  --color-brand-400: #f97066;
+  --color-brand-500: #e02020;
+  --color-brand-600: #c1121f;
+  --color-brand-700: #a10e1a;
+  --color-brand-800: #7f0b14;
+  --color-brand-900: #5f0a10;
+  --color-brand-950: #3b0509;
+
+  --color-ink-50: #f6f7f9;
+  --color-ink-100: #eceef2;
+  --color-ink-200: #d5dae3;
+  --color-ink-300: #b0b9c9;
+  --color-ink-400: #8592a8;
+  --color-ink-500: #66738c;
+  --color-ink-600: #515c73;
+  --color-ink-700: #424b5d;
+  --color-ink-800: #394050;
+  --color-ink-900: #1a1f2b;
+  --color-ink-950: #0b0b0d;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-ink-50 text-ink-800 font-sans antialiased;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-300) transparent;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+
+  input[type='date'],
+  input[type='datetime-local'] {
+    min-height: 2.5rem;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-ink-200 rounded-xl shadow-xs;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-ink-700 mb-1.5;
+  }
+
+  .table-wrap {
+    @apply overflow-x-auto;
+  }
+
+  .data-table {
+    @apply w-full text-sm text-left border-collapse;
+  }
+
+  .data-table thead th {
+    @apply bg-ink-50 text-xs font-semibold uppercase tracking-wide text-ink-500 border-b border-ink-200 px-4 py-3 whitespace-nowrap;
+  }
+
+  .data-table tbody td {
+    @apply px-4 py-3 border-b border-ink-100 align-middle text-ink-700 whitespace-nowrap;
+  }
+
+  .data-table tbody tr:hover {
+    @apply bg-brand-50/40;
+  }
+
+  .data-table tfoot td {
+    @apply bg-ink-50 px-4 py-3 font-semibold text-ink-800 border-t border-ink-200;
+  }
+
+  .brand-rule {
+    background: linear-gradient(90deg, var(--color-brand-700), var(--color-brand-500) 45%, var(--color-ink-950));
+  }
+
+  .print-only {
+    display: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    @apply bg-white;
+  }
+}
