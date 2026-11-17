@@ -27,7 +27,7 @@ export function AuthShell({ title, subtitle, children, footer }) {
               className="h-14 w-14 rounded-xl object-cover ring-1 ring-white/20"
             />
             <div>
-              <p className="text-lg font-bold tracking-[0.18em] uppercase">Devolve</p>
+              <p className="text-2xl font-bold tracking-[0.18em] uppercase">Devolve</p>
               <p className="text-xs text-ink-300">Motor Spares ERP</p>
             </div>
           </div>
@@ -57,7 +57,7 @@ export function AuthShell({ title, subtitle, children, footer }) {
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
             <img src="/logo.jpg" alt="Devolve logo" className="h-11 w-11 rounded-lg object-cover" />
             <div>
-              <p className="text-sm font-bold tracking-[0.16em] uppercase">Devolve</p>
+              <p className="text-lg font-bold tracking-[0.16em] uppercase">Devolve</p>
               <p className="text-[11px] text-ink-500">Motor Spares ERP</p>
             </div>
           </div>

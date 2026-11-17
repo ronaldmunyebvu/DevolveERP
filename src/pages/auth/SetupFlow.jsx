@@ -88,8 +88,8 @@ export function SetupFlow({ mode = 'setup' }) {
       subtitle={
         step === 'email'
           ? isReset
-            ? 'Enter the email address on your Devolve account. We will send a 6-digit code to your administrator.'
-            : 'Enter the email address your Devolve owner set up for you. We will send a 6-digit code to your administrator.'
+            ? 'Enter the exact email on your Devolve account. The 6-digit code will be sent to your administrator.'
+            : 'Enter the exact email your administrator added for you. The 6-digit code will be sent to your administrator.'
           : 'Enter the code your administrator received and choose a password.'
       }
       footer={
@@ -114,7 +114,11 @@ export function SetupFlow({ mode = 'setup' }) {
 
       {step === 'email' ? (
         <form onSubmit={sendCode} className="space-y-4">
-          <Field label="Email address" required>
+          <Field
+            label="Email address"
+            required
+            hint="Use the email your administrator added for your account."
+          >
             <Input
               type="email"
               autoComplete="email"
@@ -125,12 +129,16 @@ export function SetupFlow({ mode = 'setup' }) {
             />
           </Field>
           <Button type="submit" loading={busy} className="w-full" size="lg">
-            Email my code
+            Email code to administrator
           </Button>
         </form>
       ) : (
         <form onSubmit={verify} className="space-y-4">
-          <Field label="6-digit code" required hint="The code expires after 10 minutes.">
+          <Field
+            label="6-digit code"
+            required
+            hint="Ask your administrator for the code. It expires after 10 minutes."
+          >
             <Input
               inputMode="numeric"
               autoComplete="one-time-code"

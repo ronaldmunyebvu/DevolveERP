@@ -132,7 +132,7 @@ export default function LoginPage() {
       ? 'Enter the code your administrator received and choose your password.'
       : role === 'admin'
         ? 'Sign in with the administrator email and password.'
-        : 'Use the email your administrator added. Need to set or reset your password? Send the code to your administrator.'
+        : 'Use the email your administrator added and the password you set with their code.'
 
   return (
     <AuthShell
@@ -243,7 +243,15 @@ export default function LoginPage() {
       ) : (
         <div className="space-y-4">
           <form onSubmit={submit} className="space-y-4">
-            <Field label="Email address" required>
+            <Field
+              label="Email address"
+              required
+              hint={
+                role === 'member'
+                  ? 'Use the exact email your administrator added for your staff account.'
+                  : undefined
+              }
+            >
               <Input
                 type="email"
                 autoComplete="email"
@@ -254,11 +262,7 @@ export default function LoginPage() {
                 autoFocus
               />
             </Field>
-            <Field
-              label="Password"
-              required
-              hint={role === 'member' ? 'Leave blank if you still need to set a password.' : undefined}
-            >
+            <Field label="Password" required>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
@@ -287,7 +291,7 @@ export default function LoginPage() {
           {role === 'member' && (
             <div className="border-t border-ink-200 pt-4">
               <p className="mb-2 text-sm text-ink-500">
-                First time, or forgot your password? We will email a setup code to your administrator.
+                First time here? We will email a setup code to your administrator.
               </p>
               <Button
                 type="button"
@@ -299,6 +303,12 @@ export default function LoginPage() {
                 <MailCheck size={16} />
                 Email setup code to administrator
               </Button>
+              <Link
+                to="/forgot-password"
+                className="mt-3 block text-center text-sm font-medium text-brand-700 hover:text-brand-800"
+              >
+                Forgot password? Send a reset code to your administrator
+              </Link>
             </div>
           )}
         </div>

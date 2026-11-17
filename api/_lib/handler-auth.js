@@ -48,10 +48,10 @@ async function adminRecipient(user) {
      ORDER BY created_at LIMIT 1`,
     [user.company_id],
   )
-  return {
-    email: admin?.email || user.email,
-    name: admin?.full_name || user.full_name,
+  if (!admin) {
+    throw new ApiError('No active administrator is available to issue a code.', 503)
   }
+  return { email: admin.email, name: admin.full_name }
 }
 
 function requestedRole(value) {
