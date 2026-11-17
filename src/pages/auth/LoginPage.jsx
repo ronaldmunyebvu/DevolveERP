@@ -73,9 +73,7 @@ export default function LoginPage() {
     try {
       await requestSetup(email.trim(), 'member')
       setStep('verify')
-      setNotice(
-        `If ${email.trim()} is an active team account, a 6-digit code was emailed to your administrator. Ask them for the code.`,
-      )
+      setNotice('A 6-digit code was emailed to your administrator. Ask them for the code.')
     } catch (cause) {
       setError(cause.message)
     } finally {
@@ -269,7 +267,6 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder={role === 'member' ? 'Password set with your admin code' : 'Your password'}
                   className="pr-10"
                   required
                 />

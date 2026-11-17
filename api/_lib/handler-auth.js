@@ -134,13 +134,14 @@ const ACTIONS = {
     const role = requestedRole(payload.role)
     if (!EMAIL_RE.test(email)) throw new ApiError('Enter a valid email address.')
     const user = await findUserByEmail(email)
-    if (!user || user.status !== 'active') {
-      // Same response whether or not the account exists.
-      return { sent: true }
+    if (!user) {
+      throw new ApiError('That email is not registered as a staff member. Contact your administrator.', 404)
+    }
+    if (user.status !== 'active') {
+      throw new ApiError('That staff account is not active. Contact your administrator.', 403)
     }
     if (role && user.role !== role) {
-      // Do not reveal whether the address exists under another role.
-      return { sent: true }
+      throw new ApiError(`That email is not registered as a ${role}. Contact your administrator.`, 404)
     }
     const purpose = user.must_setup ? 'setup' : 'reset'
     const code = await issueCode(user.id, purpose)

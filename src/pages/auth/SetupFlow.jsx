@@ -33,9 +33,7 @@ export function SetupFlow({ mode = 'setup' }) {
     try {
       await request(email.trim())
       setStep('verify')
-      setNotice(
-        `If ${email.trim()} belongs to an account, the 6-digit code was emailed to your administrator.`,
-      )
+      setNotice('A 6-digit code was emailed to your administrator. Ask them for the code.')
     } catch (cause) {
       setError(cause.message)
     } finally {
