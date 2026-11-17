@@ -269,8 +269,9 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Your password"
+                  placeholder={role === 'member' ? 'Password set with your admin code' : 'Your password'}
                   className="pr-10"
+                  required
                 />
                 <button
                   type="button"
