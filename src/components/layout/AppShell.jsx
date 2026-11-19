@@ -63,7 +63,7 @@ function Brand({ collapsed = false }) {
           <p className="truncate text-sm font-bold tracking-wide text-white uppercase">
             {company?.name || 'Devolve'}
           </p>
-          <p className="truncate text-[11px] text-ink-400">Motor Spares ERP</p>
+          <p className="truncate text-[11px] text-ink-400">Truck & Trailer Spares</p>
         </div>
       )}
     </div>

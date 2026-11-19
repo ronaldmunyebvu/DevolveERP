@@ -1,4 +1,4 @@
-# Devolve Motor Spares ERP
+# Devolve Truck & Trailer Spares
 
 Inventory, sales, quotations, credit, cashbook and journals for Devolve Motor Spares.
 

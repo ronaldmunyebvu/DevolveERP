@@ -6,7 +6,7 @@
   "engines": {
     "node": ">=20"
   },
-  "description": "Devolve Motor Spares ERP - inventory, sales, quotations, credit, cashbook and journals",
+  "description": "Devolve Truck & Trailer Spares - inventory, sales, quotations, credit, cashbook and journals",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:web": "vite",

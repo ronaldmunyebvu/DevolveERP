@@ -43,7 +43,7 @@ function layout({ preheader, heading, body, action, note, footer }) {
               <td style="padding-right:10px;"><img src="${logo}" width="34" height="34" alt="Devolve" style="border-radius:8px;display:block;" /></td>
               <td>
                 <span style="font-size:16px;font-weight:bold;color:#ffffff;display:block;line-height:1.2;">Devolve</span>
-                <span style="font-size:11px;color:#d4d4d8;display:block;">Motor Spares ERP</span>
+                <span style="font-size:11px;color:#d4d4d8;display:block;">Truck &amp; Trailer Spares</span>
               </td>
             </tr></table>
           </td></tr>

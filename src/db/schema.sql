@@ -1,4 +1,4 @@
--- Devolve Motor Spares ERP - PostgreSQL schema
+-- Devolve Truck & Trailer Spares - PostgreSQL schema
 -- Safe to run repeatedly: every statement is idempotent.
 
 CREATE TABLE IF NOT EXISTS companies (
