@@ -19,7 +19,7 @@ if (!connectionString) {
   process.exit(1)
 }
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'rmmunyebvu@gmail.com').trim()
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'devolvetruckspares@gmail.com').trim()
 
 const categories = [
   'Engine',
@@ -82,7 +82,7 @@ async function ensureCompany(client) {
       'Zimbabwe',
       'USD',
       0,
-      '/logo.jpg',
+      '/logo2.jpg',
       'Prices are valid until the date shown. Stock is subject to availability. Goods remain the property of Devolve until paid in full.',
       'Payment is due by the date shown. Goods remain the property of Devolve until paid in full.',
     ],

@@ -12,6 +12,29 @@ const PAGE_W = 595.28
 const PAGE_H = 841.89
 const MARGIN = 42
 const CONTENT_W = PAGE_W - MARGIN * 2
+const LOGO_URL = '/logo2.jpg'
+const FOOTER_RESERVE = 118
+
+const LETTERHEAD = {
+  name: 'Devolve Enterprises (Pvt) Ltd',
+  tagline: 'Suppliers of all Trucks, Buses & Trailer Spares, all Lubricants & General Hardware',
+  address: 'Shop No. 37 H2, High Glen Complex, Harare',
+  email: 'devolvetruckspares@gmail.com',
+  phone: 'Tel: +263-24-2690508, Cell: +263 774 212 089 / +263 776 388 108 / +263 719 388 108',
+  bank: [
+    'Account  Name: Devolve Enterprises (PVT) LTD',
+    'Bank: Nedbank Zimbabwe',
+    'Branch: Southerton',
+  ],
+  accounts: ['Account Number (USD): 11991264320', 'Account Number (ZWL):61031011403'],
+  vendor: 'VENDOR NUMBER: 717377',
+}
+
+function productName(value) {
+  return String(value || '')
+    .replace(/^\s*SKU[-\s]*\d+\s*[-–—:]\s*/i, '')
+    .trim()
+}
 
 let logoPromise = null
 
@@ -32,13 +55,13 @@ function fetchLogo(url) {
 }
 
 async function getLogo(company) {
-  const url = company?.logo_url || '/logo.jpg'
+  const url = company?.logo_url || LOGO_URL
   if (!logoPromise || logoPromise.url !== url) {
     logoPromise = fetchLogo(url).then((data) => ({ url, data }))
-    if (url !== '/logo.jpg') {
+    if (url !== LOGO_URL) {
       const primary = await logoPromise
       if (!primary.data) {
-        const fallback = await fetchLogo('/logo.jpg')
+        const fallback = await fetchLogo(LOGO_URL)
         logoPromise = Promise.resolve({ url, data: fallback })
         return fallback
       }
@@ -78,7 +101,7 @@ function buildPayload(record, type, company) {
     },
     items: (record.items || []).map((item) => ({
       sku: item.sku,
-      name: item.product_name || item.description,
+      name: item.product_name || productName(item.description) || item.description,
       description: item.description,
       unit: item.unit,
       quantity: Number(item.quantity) || 0,
@@ -106,52 +129,45 @@ export function payloadFromQuotation(quotation, company) {
   return buildPayload(quotation, 'quotation', company)
 }
 
+function drawLogoFallback(doc, x, y, size) {
+  doc.setFillColor(...BRAND)
+  doc.roundedRect(x, y, size, size, 8, 8, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(26)
+  doc.text('D', x + size / 2, y + size * 0.68, { align: 'center' })
+}
+
 function drawHeader(doc, payload, logo, compact = false) {
-  const company = payload.company || {}
-  const currency = company.currency || 'USD'
-  let y = MARGIN
+  const currency = payload.company?.currency || 'USD'
+  const y = MARGIN
+  const logoSize = 52
 
   if (logo) {
     try {
-      doc.addImage(logo, 'JPEG', MARGIN, y, 54, 54)
+      doc.addImage(logo, 'JPEG', MARGIN, y, logoSize, logoSize)
     } catch {
-      doc.setFillColor(...BRAND)
-      doc.roundedRect(MARGIN, y, 54, 54, 8, 8, 'F')
-      doc.setTextColor(255, 255, 255)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(26)
-      doc.text('D', MARGIN + 27, y + 36, { align: 'center' })
+      drawLogoFallback(doc, MARGIN, y, logoSize)
     }
   } else {
-    doc.setFillColor(...BRAND)
-    doc.roundedRect(MARGIN, y, 54, 54, 8, 8, 'F')
-    doc.setTextColor(255, 255, 255)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(26)
-    doc.text('D', MARGIN + 27, y + 36, { align: 'center' })
+    drawLogoFallback(doc, MARGIN, y, logoSize)
   }
 
-  const textX = MARGIN + 66
+  const textX = MARGIN + 62
   doc.setTextColor(...INK)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(compact ? 13 : 17)
-  doc.text(company.name || 'Devolve', textX, y + 13)
+  doc.setFontSize(compact ? 11 : 13)
+  doc.text(LETTERHEAD.name, textX, y + 11)
+
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.5)
+  doc.setFontSize(7.4)
   doc.setTextColor(...GREY)
-  let lineY = y + 26
-  const lines = [
-    company.legal_name && company.legal_name !== company.name ? company.legal_name : null,
-    company.address,
-    [company.city, company.country].filter(Boolean).join(', '),
-    [company.phone, company.phone_alt].filter(Boolean).join(' / '),
-    company.email,
-    company.website,
-    company.tax_number ? `Tax / VAT: ${company.tax_number}` : null,
-  ].filter(Boolean)
-  for (const line of lines) {
-    doc.text(String(line), textX, lineY)
-    lineY += 11
+  const tagline = doc.splitTextToSize(LETTERHEAD.tagline, 305).slice(0, 2)
+  doc.text(tagline, textX, y + 23)
+  let leftY = y + 23 + tagline.length * 9 + 3
+  for (const line of [LETTERHEAD.address, LETTERHEAD.email, ...doc.splitTextToSize(LETTERHEAD.phone, 305)]) {
+    doc.text(String(line), textX, leftY)
+    leftY += 9
   }
 
   const rightX = PAGE_W - MARGIN
@@ -182,7 +198,7 @@ function drawHeader(doc, payload, logo, compact = false) {
     metaY += 11
   }
 
-  const ruleY = Math.max(lineY + 4, metaY + 2, y + 62)
+  const ruleY = Math.max(leftY + 2, metaY + 2, y + 62)
   doc.setDrawColor(...BRAND)
   doc.setLineWidth(2)
   doc.line(MARGIN, ruleY, PAGE_W - MARGIN, ruleY)
@@ -264,8 +280,9 @@ function drawTableHead(doc, y) {
 
 function drawTableRow(doc, item, index, y) {
   const currency = item._currency
-  const name = String(item.name || item.description || 'Item')
-  const sub = [item.sku, item.unit].filter(Boolean).join(' · ')
+  const name = productName(item.name || item.description) || 'Item'
+  const detail = productName(item.description)
+  const sub = [detail && detail !== name ? detail : null, item.unit].filter(Boolean).join(' · ')
   const nameLines = doc.splitTextToSize(name, COLS[1].w - 12).slice(0, 2)
   const rowHeight = Math.max(24, 13 + nameLines.length * 10 + (sub ? 3 : 0))
 
@@ -382,17 +399,40 @@ function drawNotes(doc, payload, y) {
 }
 
 function drawFooter(doc, payload) {
-  const company = payload.company || {}
-  const y = PAGE_H - 42
+  const y = PAGE_H - 104
+  doc.setFillColor(...LIGHT)
+  doc.rect(MARGIN, y, CONTENT_W, 56, 'F')
+  doc.setDrawColor(...LINE)
+  doc.setLineWidth(0.6)
+  doc.rect(MARGIN, y, CONTENT_W, 56, 'S')
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(7.5)
+  doc.setTextColor(...BRAND)
+  doc.text('BANK DETAILS', MARGIN + 8, y + 12)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.2)
+  doc.setTextColor(...INK)
+  LETTERHEAD.bank.forEach((line, index) => {
+    doc.text(line, MARGIN + 8, y + 23 + index * 9)
+  })
+
+  const bankX = MARGIN + 280
+  LETTERHEAD.accounts.forEach((line, index) => {
+    doc.text(line, bankX, y + 23 + index * 9)
+  })
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...BRAND)
+  doc.text(LETTERHEAD.vendor, bankX, y + 50)
+
   doc.setDrawColor(...BRAND)
   doc.setLineWidth(1)
-  doc.line(MARGIN, y - 14, PAGE_W - MARGIN, y - 14)
+  doc.line(MARGIN, PAGE_H - 34, PAGE_W - MARGIN, PAGE_H - 34)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.setTextColor(...GREY)
-  const contact = [company.phone, company.email, company.website].filter(Boolean).join('  ·  ')
-  doc.text(contact || company.name || 'Devolve', MARGIN, y)
-  doc.text(`${documentTitle(payload)} ${payload.number || ''}`, PAGE_W - MARGIN, y, { align: 'right' })
+  doc.text(LETTERHEAD.email, MARGIN, PAGE_H - 20)
+  doc.text(`${documentTitle(payload)} ${payload.number || ''}`, PAGE_W - MARGIN, PAGE_H - 20, { align: 'right' })
 }
 
 export async function generateDocumentPdf(payload) {
@@ -408,7 +448,7 @@ export async function generateDocumentPdf(payload) {
   }))
 
   for (let index = 0; index < items.length; index += 1) {
-    if (y + 40 > PAGE_H - 90) {
+    if (y + 40 > PAGE_H - FOOTER_RESERVE) {
       drawFooter(doc, payload)
       doc.addPage()
       y = MARGIN + 10
@@ -421,7 +461,7 @@ export async function generateDocumentPdf(payload) {
     y = drawTableRow(doc, items[index], index, y)
   }
 
-  if (y + 120 > PAGE_H - 80) {
+  if (y + 120 > PAGE_H - FOOTER_RESERVE - 10) {
     drawFooter(doc, payload)
     doc.addPage()
     y = MARGIN + 10
@@ -476,21 +516,24 @@ export function printDocument(payload) {
   const company = payload.company || {}
   const currency = company.currency || 'USD'
   const origin = window.location.origin
-  const logo = company.logo_url ? `${origin}${company.logo_url}` : `${origin}/logo.jpg`
+  const logo = company.logo_url ? `${origin}${company.logo_url}` : `${origin}${LOGO_URL}`
   const rows = (payload.items || [])
-    .map(
-      (item, index) => `
+    .map((item, index) => {
+      const name = productName(item.name || item.description) || 'Item'
+      const detail = productName(item.description)
+      const sub = [detail && detail !== name ? detail : null, item.unit].filter(Boolean).join(' · ')
+      return `
         <tr>
           <td class="num">${index + 1}</td>
           <td>
-            <div class="item">${escapeHtml(item.name || item.description)}</div>
-            <div class="sub">${escapeHtml([item.sku, item.unit].filter(Boolean).join(' &middot; '))}</div>
+            <div class="item">${escapeHtml(name)}</div>
+            <div class="sub">${escapeHtml(sub)}</div>
           </td>
           <td class="num">${amount(item.quantity)}</td>
           <td class="num">${amount(item.unit_price)}</td>
           <td class="num strong">${amount(item.line_total)}</td>
-        </tr>`,
-    )
+        </tr>`
+    })
     .join('')
 
   const meta = [
@@ -519,15 +562,6 @@ export function printDocument(payload) {
         <th>${label}</th><td>${value}</td></tr>`
     })
     .join('')
-
-  const contact = [
-    company.address,
-    [company.city, company.country].filter(Boolean).join(', '),
-    [company.phone, company.phone_alt].filter(Boolean).join(' / '),
-    company.email,
-    company.website,
-    company.tax_number ? `Tax / VAT: ${company.tax_number}` : null,
-  ].filter(Boolean)
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"><title>${escapeHtml(payload.number || documentTitle(payload))}</title>
@@ -570,16 +604,20 @@ export function printDocument(payload) {
   .totals td { text-align: right; padding: 6px 8px; font-size: 11px; white-space: nowrap; }
   .totals tr.strong th, .totals tr.strong td { font-weight: 700; font-size: 13px; border-top: 1px solid #d5dae3; }
   .totals tr.brand th, .totals tr.brand td { color: #c1121f; }
-  .foot { margin-top: 28px; padding-top: 8px; border-top: 2px solid #c1121f; display: flex; justify-content: space-between; gap: 16px; color: #66738c; font-size: 10px; }
+  .bank { margin-top: 24px; padding: 11px 13px; background: #f6f7f9; border: 1px solid #d5dae3; display: flex; justify-content: space-between; gap: 24px; font-size: 10px; line-height: 1.5; }
+  .bank h3 { margin: 0 0 4px; color: #c1121f; font-size: 9px; letter-spacing: .08em; }
+  .bank p { margin: 0; white-space: nowrap; }
+  .bank .vendor { margin-top: 6px; color: #c1121f; font-weight: 700; }
+  .foot { margin-top: 18px; padding-top: 8px; border-top: 2px solid #c1121f; display: flex; justify-content: space-between; gap: 16px; color: #66738c; font-size: 10px; }
 </style></head>
 <body>
   <div class="head">
     <div class="brand">
       <img src="${logo}" alt="">
       <div>
-        <h1>${escapeHtml(company.name || 'Devolve')}</h1>
-        <p>${escapeHtml(company.legal_name || '')}</p>
-        <p>${contact.slice(0, 3).map(escapeHtml).join('<br>')}</p>
+        <h1>${escapeHtml(LETTERHEAD.name)}</h1>
+        <p>${escapeHtml(LETTERHEAD.tagline)}</p>
+        <p>${escapeHtml(LETTERHEAD.address)}<br>${escapeHtml(LETTERHEAD.email)}<br>${escapeHtml(LETTERHEAD.phone)}</p>
       </div>
     </div>
     <div class="doc">
@@ -625,8 +663,18 @@ export function printDocument(payload) {
     </div>
     <table class="totals">${totals}</table>
   </div>
+  <div class="bank">
+    <div>
+      <h3>BANK DETAILS</h3>
+      ${LETTERHEAD.bank.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}
+    </div>
+    <div>
+      ${LETTERHEAD.accounts.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}
+      <p class="vendor">${escapeHtml(LETTERHEAD.vendor)}</p>
+    </div>
+  </div>
   <div class="foot">
-    <span>${escapeHtml(contact.join(' · '))}</span>
+    <span>${escapeHtml(LETTERHEAD.email)}</span>
     <span>${documentTitle(payload)} ${escapeHtml(payload.number || '')}</span>
   </div>
 </body></html>`

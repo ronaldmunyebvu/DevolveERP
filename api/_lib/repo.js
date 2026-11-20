@@ -7,6 +7,7 @@
  * read or write the caller's own company.
  */
 import { generateCode, hashCode } from './auth.js'
+import { OTP_EMAIL } from './mailer.js'
 import { normalizePermissions } from './permissions.js'
 
 const round2 = (value) => Math.round((Number(value) || 0) * 100) / 100
@@ -785,7 +786,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
             text(payload.tax_number) || null,
             text(payload.currency) || 'USD',
             round2(payload.tax_rate),
-            text(payload.logo_url) || '/logo.jpg',
+            text(payload.logo_url) || '/logo2.jpg',
             text(payload.quotation_terms) || null,
             text(payload.invoice_terms) || null,
           ],
@@ -895,7 +896,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
           [ctx.companyId],
         )
         const recipient = {
-          email: admin?.email || user.email,
+          email: OTP_EMAIL,
           name: admin?.full_name || user.full_name,
         }
         const sent = await mail.setupCode({

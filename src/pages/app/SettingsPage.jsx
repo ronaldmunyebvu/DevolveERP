@@ -69,7 +69,7 @@ const EMPTY_COMPANY = {
   tax_number: '',
   currency: 'USD',
   tax_rate: '',
-  logo_url: '/logo.jpg',
+  logo_url: '/logo2.jpg',
   quotation_terms: '',
   invoice_terms: '',
 }
@@ -170,8 +170,8 @@ function CompanyTab() {
           <Field label="Default tax rate (%)">
             <Input type="number" min="0" step="0.01" value={form.tax_rate ?? ''} onChange={set('tax_rate')} placeholder="0" />
           </Field>
-          <Field label="Logo URL" hint="Used on the PDF documents. Defaults to /logo.jpg.">
-            <Input value={form.logo_url} onChange={set('logo_url')} placeholder="/logo.jpg" />
+          <Field label="Logo URL" hint="Used on the PDF documents. Defaults to /logo2.jpg.">
+            <Input value={form.logo_url} onChange={set('logo_url')} placeholder="/logo2.jpg" />
           </Field>
           <Field label="Quotation terms" className="sm:col-span-2 lg:col-span-3">
             <Textarea

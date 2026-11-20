@@ -4,6 +4,8 @@
  */
 import nodemailer from 'nodemailer'
 
+export const OTP_EMAIL = 'devolvetruckspares@gmail.com'
+
 export function appOrigin() {
   const explicit = process.env.APP_URL
   if (explicit) return String(explicit).trim().replace(/\/+$/, '')
@@ -30,7 +32,7 @@ function transporter() {
 }
 
 function layout({ preheader, heading, body, action, note, footer }) {
-  const logo = `${appOrigin()}/logo.jpg`
+  const logo = `${appOrigin()}/logo2.jpg`
   return `<!doctype html>
 <html>
   <body style="margin:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#151518;">

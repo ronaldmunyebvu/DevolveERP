@@ -22,7 +22,7 @@ export function AuthShell({ title, subtitle, children, footer }) {
         <div className="relative">
           <div className="flex items-center gap-3">
             <img
-              src="/logo.jpg"
+              src="/logo2.jpg"
               alt="Devolve logo"
               className="h-14 w-14 rounded-xl object-cover ring-1 ring-white/20"
             />
@@ -55,7 +55,7 @@ export function AuthShell({ title, subtitle, children, footer }) {
       <main className="flex min-h-screen flex-col justify-center px-5 py-10 sm:px-10">
         <div className="mx-auto w-full max-w-md">
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
-            <img src="/logo.jpg" alt="Devolve logo" className="h-11 w-11 rounded-lg object-cover" />
+            <img src="/logo2.jpg" alt="Devolve logo" className="h-11 w-11 rounded-lg object-cover" />
             <div>
               <p className="text-lg font-bold tracking-[0.16em] uppercase">Devolve</p>
               <p className="text-[11px] text-ink-500">Truck & Trailer Spares</p>

@@ -54,7 +54,7 @@ function Brand({ collapsed = false }) {
   return (
     <div className={cn('flex items-center gap-2.5', collapsed ? 'justify-center' : 'px-5')}>
       <img
-        src="/logo.jpg"
+        src="/logo2.jpg"
         alt="Devolve logo"
         className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-white/15"
       />
@@ -241,7 +241,7 @@ export function AppShell({ children }) {
             {collapsed ? (
               <div className="flex h-full flex-col items-center gap-4 bg-ink-950 py-4">
                 <img
-                  src="/logo.jpg"
+                  src="/logo2.jpg"
                   alt="Devolve logo"
                   className="h-9 w-9 rounded-lg object-cover ring-1 ring-white/15"
                 />

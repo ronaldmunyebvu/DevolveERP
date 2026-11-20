@@ -8,7 +8,7 @@ import {
   publicAccount,
   verifyPassword,
 } from './auth.js'
-import { mail } from './mailer.js'
+import { mail, OTP_EMAIL } from './mailer.js'
 import {
   SESSION_COOKIE,
   clearSessionCookie,
@@ -51,7 +51,7 @@ async function adminRecipient(user) {
   if (!admin) {
     throw new ApiError('No active administrator is available to issue a code.', 503)
   }
-  return { email: admin.email, name: admin.full_name }
+  return { email: OTP_EMAIL, name: admin.full_name }
 }
 
 function requestedRole(value) {
