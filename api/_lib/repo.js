@@ -1178,13 +1178,6 @@ export function createRepository({ query, one, withTransaction }, mail) {
         }
       },
       async remove(ctx, payload) {
-        const movements = await one(
-          `SELECT count(*)::int AS count FROM stock_movements WHERE product_id = $1 AND company_id = $2`,
-          [payload.id, ctx.companyId],
-        )
-        if (Number(movements.count) > 0) {
-          throw httpError('This product has stock history. Mark it discontinued instead.')
-        }
         await query('DELETE FROM products WHERE id = $1 AND company_id = $2', [
           payload.id,
           ctx.companyId,

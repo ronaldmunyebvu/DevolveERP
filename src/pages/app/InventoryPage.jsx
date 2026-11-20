@@ -835,7 +835,7 @@ export default function InventoryPage() {
         title="Delete product?"
         message={
           deleting
-            ? `Delete ${deleting.name}? Products with stock history cannot be deleted — mark them discontinued instead.`
+            ? `Delete ${deleting.name}?`
             : ''
         }
         confirmLabel="Delete product"
