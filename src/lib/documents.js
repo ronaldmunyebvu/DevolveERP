@@ -37,8 +37,9 @@ function productName(value) {
 }
 
 let logoPromise = null
+let truckPromise = null
 
-function fetchLogo(url) {
+function fetchImageData(url) {
   return fetch(url, { cache: 'force-cache' })
     .then((response) => (response.ok ? response.blob() : null))
     .then(
@@ -57,11 +58,11 @@ function fetchLogo(url) {
 async function getLogo(company) {
   const url = company?.logo_url || LOGO_URL
   if (!logoPromise || logoPromise.url !== url) {
-    logoPromise = fetchLogo(url).then((data) => ({ url, data }))
+    logoPromise = fetchImageData(url).then((data) => ({ url, data }))
     if (url !== LOGO_URL) {
       const primary = await logoPromise
       if (!primary.data) {
-        const fallback = await fetchLogo(LOGO_URL)
+        const fallback = await fetchImageData(LOGO_URL)
         logoPromise = Promise.resolve({ url, data: fallback })
         return fallback
       }
@@ -70,6 +71,11 @@ async function getLogo(company) {
   }
   const result = await logoPromise
   return result.data
+}
+
+function getTruck() {
+  if (!truckPromise) truckPromise = fetchImageData('/truck.png')
+  return truckPromise
 }
 
 function money(currency, value) {
@@ -138,7 +144,7 @@ function drawLogoFallback(doc, x, y, size) {
   doc.text('D', x + size / 2, y + size * 0.68, { align: 'center' })
 }
 
-function drawHeader(doc, payload, logo, compact = false) {
+function drawHeader(doc, payload, logo, truck, compact = false) {
   const currency = payload.company?.currency || 'USD'
   const y = MARGIN
   const logoSize = 52
@@ -154,6 +160,9 @@ function drawHeader(doc, payload, logo, compact = false) {
   }
 
   const textX = MARGIN + 62
+  if (truck && truck.startsWith('data:image/')) {
+    doc.addImage(truck, 'PNG', MARGIN + 312, y + 8, 72, 37)
+  }
   doc.setTextColor(...INK)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(compact ? 11 : 13)
@@ -162,10 +171,10 @@ function drawHeader(doc, payload, logo, compact = false) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.4)
   doc.setTextColor(...GREY)
-  const tagline = doc.splitTextToSize(LETTERHEAD.tagline, 305).slice(0, 2)
+  const tagline = doc.splitTextToSize(LETTERHEAD.tagline, 240).slice(0, 3)
   doc.text(tagline, textX, y + 23)
   let leftY = y + 23 + tagline.length * 9 + 3
-  for (const line of [LETTERHEAD.address, LETTERHEAD.email, ...doc.splitTextToSize(LETTERHEAD.phone, 305)]) {
+  for (const line of [LETTERHEAD.address, LETTERHEAD.email, ...doc.splitTextToSize(LETTERHEAD.phone, 240)]) {
     doc.text(String(line), textX, leftY)
     leftY += 9
   }
@@ -437,8 +446,8 @@ function drawFooter(doc, payload) {
 
 export async function generateDocumentPdf(payload) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-  const logo = await getLogo(payload.company)
-  let y = drawHeader(doc, payload, logo)
+  const [logo, truck] = await Promise.all([getLogo(payload.company), getTruck()])
+  let y = drawHeader(doc, payload, logo, truck)
   y = drawCustomer(doc, payload, y + 6)
   y = drawTableHead(doc, y + 8)
 
@@ -517,6 +526,7 @@ export function printDocument(payload) {
   const currency = company.currency || 'USD'
   const origin = window.location.origin
   const logo = company.logo_url ? `${origin}${company.logo_url}` : `${origin}${LOGO_URL}`
+  const truck = `${origin}/truck.png`
   const rows = (payload.items || [])
     .map((item, index) => {
       const name = productName(item.name || item.description) || 'Item'
@@ -572,6 +582,7 @@ export function printDocument(payload) {
   .head { display: flex; justify-content: space-between; gap: 24px; }
   .brand { display: flex; gap: 14px; }
   .brand img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; }
+  .truck { width: 72px; height: auto; align-self: center; }
   .brand h1 { margin: 0; font-size: 21px; letter-spacing: .02em; }
   .brand p { margin: 3px 0 0; color: #66738c; font-size: 11px; }
   .doc { text-align: right; }
@@ -620,6 +631,7 @@ export function printDocument(payload) {
         <p>${escapeHtml(LETTERHEAD.address)}<br>${escapeHtml(LETTERHEAD.email)}<br>${escapeHtml(LETTERHEAD.phone)}</p>
       </div>
     </div>
+    <img class="truck" src="${truck}" alt="">
     <div class="doc">
       <h2>${documentTitle(payload)}</h2>
       <div class="number">${escapeHtml(payload.number || '')}</div>
