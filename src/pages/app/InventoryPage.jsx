@@ -54,11 +54,9 @@ const EMPTY_PRODUCT = {
   unit: 'pc',
   cost_price: '',
   selling_price: '',
-  wholesale_price: '',
   reorder_level: '',
   opening_quantity: '',
   location_id: '',
-  expiry_date: '',
   tags: '',
   status: 'active',
   description: '',
@@ -79,7 +77,6 @@ function ProductFormModal({ open, onClose, product, categories, locations, repo,
         ...EMPTY_PRODUCT,
         ...product,
         tags: Array.isArray(product.tags) ? product.tags.join(', ') : product.tags || '',
-        expiry_date: product.expiry_date ? String(product.expiry_date).slice(0, 10) : '',
       })
     } else {
       const defaultLocation = locations.find((location) => location.is_default) || locations[0]
@@ -123,11 +120,9 @@ function ProductFormModal({ open, onClose, product, categories, locations, repo,
         ...form,
         cost_price: Number(form.cost_price) || 0,
         selling_price: Number(form.selling_price) || 0,
-        wholesale_price: Number(form.wholesale_price) || 0,
         reorder_level: Number(form.reorder_level) || 0,
         opening_quantity: Number(form.opening_quantity) || 0,
         tags: form.tags,
-        expiry_date: form.expiry_date || null,
       }
       if (product) {
         await repo.products.update({ ...payload, id: product.id })
@@ -229,16 +224,6 @@ function ProductFormModal({ open, onClose, product, categories, locations, repo,
               placeholder="0.00"
             />
           </Field>
-          <Field label="Wholesale price">
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.wholesale_price}
-              onChange={set('wholesale_price')}
-              placeholder="0.00"
-            />
-          </Field>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -263,9 +248,6 @@ function ProductFormModal({ open, onClose, product, categories, locations, repo,
               onChange={set('reorder_level')}
               placeholder="0"
             />
-          </Field>
-          <Field label="Expiry date">
-            <Input type="date" value={form.expiry_date} onChange={set('expiry_date')} />
           </Field>
           <Field label="Status">
             <Select value={form.status} onChange={set('status')}>
@@ -453,9 +435,7 @@ function ProductDetailModal({ open, onClose, product, repo, currency }) {
                   ['Category', data?.category_name],
                   ['Brand', data?.brand],
                   ['Barcode', data?.barcode],
-                  ['Wholesale', data?.wholesale_price != null ? formatMoney(data.wholesale_price, currency) : null],
                   ['Reorder level', data?.reorder_level != null ? formatQuantity(data.reorder_level) : null],
-                  ['Expiry', data?.expiry_date ? formatDate(data.expiry_date) : null],
                   ['Tags', (data?.tags || []).join(', ')],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-4">
