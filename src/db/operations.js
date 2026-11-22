@@ -21,9 +21,6 @@ export const OPERATIONS = {
   'categories.remove': { auth: 'admin' },
 
   'locations.list': { auth: 'member' },
-  'locations.create': { auth: 'admin' },
-  'locations.update': { auth: 'admin' },
-  'locations.remove': { auth: 'admin' },
 
   'products.list': { auth: 'member' },
   'products.get': { auth: 'member' },

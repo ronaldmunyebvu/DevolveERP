@@ -47,6 +47,7 @@ import {
 
 const EMPTY_PRODUCT = {
   name: '',
+  part_number: '',
   sku: '',
   barcode: '',
   category_id: '',
@@ -102,6 +103,10 @@ function ProductFormModal({ open, onClose, product, categories, locations, repo,
   async function save(event) {
     event.preventDefault()
     setError('')
+    if (!form.part_number.trim()) {
+      setError('Enter the part number.')
+      return
+    }
     if (!form.name.trim()) {
       setError('Enter the product name.')
       return
@@ -145,7 +150,7 @@ function ProductFormModal({ open, onClose, product, categories, locations, repo,
       open={open}
       onClose={onClose}
       title={product ? 'Edit product' : 'New product'}
-      description="SKU, pricing, stock location and reorder settings."
+      description="Part number, pricing, stock location and reorder settings."
       size="lg"
       footer={
         <>
@@ -165,7 +170,15 @@ function ProductFormModal({ open, onClose, product, categories, locations, repo,
           <Field label="Product name" required className="sm:col-span-2">
             <Input value={form.name} onChange={set('name')} placeholder="e.g. Toyota Hilux front brake pads" required />
           </Field>
-          <Field label="SKU" required hint="Unique code used on invoices and stock reports.">
+          <Field label="Part number" required hint="Supplier part number printed on invoices.">
+            <Input
+              value={form.part_number}
+              onChange={set('part_number')}
+              placeholder="e.g. DZ95259532231"
+              required
+            />
+          </Field>
+          <Field label="SKU" required hint="Unique internal code used on invoices and stock reports.">
             <div className="flex gap-2">
               <Input value={form.sku} onChange={set('sku')} placeholder="BRK-0001" required />
               <Button variant="secondary" onClick={generateSku} loading={generating} className="shrink-0">
@@ -390,7 +403,13 @@ function ProductDetailModal({ open, onClose, product, repo, currency }) {
   )
 
   return (
-    <Modal open={open} onClose={onClose} title={product?.name || 'Product'} description={product?.sku} size="lg">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={product?.name || 'Product'}
+      description={data?.part_number || product?.sku}
+      size="lg"
+    >
       {loading ? (
         <Spinner />
       ) : error ? (
@@ -432,6 +451,8 @@ function ProductDetailModal({ open, onClose, product, repo, currency }) {
               <h3 className="mb-2 text-xs font-semibold tracking-wide text-ink-500 uppercase">Product details</h3>
               <dl className="space-y-1.5 text-sm">
                 {[
+                  ['Part number', data?.part_number],
+                  ['SKU', data?.sku],
                   ['Category', data?.category_name],
                   ['Brand', data?.brand],
                   ['Barcode', data?.barcode],
@@ -575,6 +596,7 @@ export default function InventoryPage() {
     downloadCsv(
       'inventory',
       [
+        { label: 'Part number', value: (row) => row.part_number },
         { label: 'SKU', value: (row) => row.sku },
         { label: 'Name', value: (row) => row.name },
         { label: 'Category', value: (row) => row.category_name },
@@ -635,7 +657,7 @@ export default function InventoryPage() {
           <SearchInput
             value={filters.search}
             onChange={(value) => setFilters((current) => ({ ...current, search: value }))}
-            placeholder="Search name, SKU, barcode, brand or tag..."
+            placeholder="Search part number, name, SKU, barcode or brand..."
             className="w-full sm:w-80"
           />
           <Select
@@ -728,7 +750,7 @@ export default function InventoryPage() {
                       {product.name}
                     </button>
                     <p className="text-[11px] text-ink-500">
-                      {product.sku}
+                      {product.part_number || product.sku}
                       {product.brand ? ` · ${product.brand}` : ''}
                     </p>
                   </td>

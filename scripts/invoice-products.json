@@ -1,0 +1,1007 @@
+{
+  "source": "JGR01DES2512 by sea COMMERCIAL INVOICE.xlsx",
+  "products": [
+    {
+      "partNumber": "H1 12V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.43
+    },
+    {
+      "partNumber": "H1 24V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.43
+    },
+    {
+      "partNumber": "H3 12V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.43
+    },
+    {
+      "partNumber": "H3 24V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.43
+    },
+    {
+      "partNumber": "H4 12V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.86
+    },
+    {
+      "partNumber": "H4 24V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.86
+    },
+    {
+      "partNumber": "H7 12V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 1.0
+    },
+    {
+      "partNumber": "H7 24V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 1.0
+    },
+    {
+      "partNumber": "P21W 12V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.14
+    },
+    {
+      "partNumber": "P21W 24V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.14
+    },
+    {
+      "partNumber": "P27/7W/12V",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.57
+    },
+    {
+      "partNumber": "P27/7W",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 1.43
+    },
+    {
+      "partNumber": "12V21/5W",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.43
+    },
+    {
+      "partNumber": "24V C5W",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.71
+    },
+    {
+      "partNumber": "12V 5W",
+      "description": "bulb",
+      "quantity": 200.0,
+      "unitPrice": 0.71
+    },
+    {
+      "partNumber": "BLDZ97259190450L",
+      "description": "air filter",
+      "quantity": 100.0,
+      "unitPrice": 10.21
+    },
+    {
+      "partNumber": "1000424916",
+      "description": "water separator",
+      "quantity": 100.0,
+      "unitPrice": 3.14
+    },
+    {
+      "partNumber": "1000422382",
+      "description": "fuel filter",
+      "quantity": 100.0,
+      "unitPrice": 2.99
+    },
+    {
+      "partNumber": "1000428205",
+      "description": "oil filter",
+      "quantity": 100.0,
+      "unitPrice": 2.83
+    },
+    {
+      "partNumber": "1000700909",
+      "description": "fuel filter",
+      "quantity": 100.0,
+      "unitPrice": 1.73
+    },
+    {
+      "partNumber": "13055724",
+      "description": "oil filter",
+      "quantity": 100.0,
+      "unitPrice": 1.57
+    },
+    {
+      "partNumber": "BLSR919000918L",
+      "description": "air filter",
+      "quantity": 100.0,
+      "unitPrice": 12.57
+    },
+    {
+      "partNumber": "DZ98149190836",
+      "description": "air filter",
+      "quantity": 50.0,
+      "unitPrice": 7.07
+    },
+    {
+      "partNumber": "DZ96189360121",
+      "description": "air drier",
+      "quantity": 100.0,
+      "unitPrice": 5.97
+    },
+    {
+      "partNumber": "VG61000070005",
+      "description": "oil filter",
+      "quantity": 100.0,
+      "unitPrice": 1.41
+    },
+    {
+      "partNumber": "612600081334",
+      "description": "fuel filter",
+      "quantity": 100.0,
+      "unitPrice": 1.41
+    },
+    {
+      "partNumber": "VG1540080311",
+      "description": "water separator",
+      "quantity": 100.0,
+      "unitPrice": 3.14
+    },
+    {
+      "partNumber": "FS1003",
+      "description": "water separator",
+      "quantity": 100.0,
+      "unitPrice": 15.0
+    },
+    {
+      "partNumber": "LF9080",
+      "description": "oil filter",
+      "quantity": 100.0,
+      "unitPrice": 12.86
+    },
+    {
+      "partNumber": "FS1212",
+      "description": "fuel filter",
+      "quantity": 100.0,
+      "unitPrice": 5.43
+    },
+    {
+      "partNumber": "WF2073",
+      "description": "water separator",
+      "quantity": 100.0,
+      "unitPrice": 4.86
+    },
+    {
+      "partNumber": "PL420",
+      "description": "water separator",
+      "quantity": 50.0,
+      "unitPrice": 8.29
+    },
+    {
+      "partNumber": "LF3000",
+      "description": "oil filter",
+      "quantity": 50.0,
+      "unitPrice": 13.29
+    },
+    {
+      "partNumber": "FF1000",
+      "description": "fuel filter",
+      "quantity": 50.0,
+      "unitPrice": 8.43
+    },
+    {
+      "partNumber": "LF16352",
+      "description": "oil filter",
+      "quantity": 50.0,
+      "unitPrice": 7.57
+    },
+    {
+      "partNumber": "FS36215",
+      "description": "water separator",
+      "quantity": 50.0,
+      "unitPrice": 13.57
+    },
+    {
+      "partNumber": "LF16015",
+      "description": "oil filter",
+      "quantity": 50.0,
+      "unitPrice": 6.86
+    },
+    {
+      "partNumber": "FF5706",
+      "description": "fuel filter",
+      "quantity": 50.0,
+      "unitPrice": 10.43
+    },
+    {
+      "partNumber": "1012015-420-219Q",
+      "description": "oil filter",
+      "quantity": 50.0,
+      "unitPrice": 3.93
+    },
+    {
+      "partNumber": "P557440",
+      "description": "fuel filter",
+      "quantity": 50.0,
+      "unitPrice": 2.2
+    },
+    {
+      "partNumber": "P134353",
+      "description": "air filter",
+      "quantity": 50.0,
+      "unitPrice": 7.86
+    },
+    {
+      "partNumber": "AD1000424655",
+      "description": "oil filter",
+      "quantity": 50.0,
+      "unitPrice": 1.49
+    },
+    {
+      "partNumber": "AD1000588583",
+      "description": "water separator",
+      "quantity": 50.0,
+      "unitPrice": 3.15
+    },
+    {
+      "partNumber": "BLDZ297259191047",
+      "description": "air filter",
+      "quantity": 50.0,
+      "unitPrice": 13.19
+    },
+    {
+      "partNumber": "FS36267",
+      "description": "fuel water separator",
+      "quantity": 50.0,
+      "unitPrice": 9.42
+    },
+    {
+      "partNumber": "DZ91189550169",
+      "description": "fuel water separator",
+      "quantity": 50.0,
+      "unitPrice": 11.59
+    },
+    {
+      "partNumber": "4320012",
+      "description": "fuel filter",
+      "quantity": 50.0,
+      "unitPrice": 16.67
+    },
+    {
+      "partNumber": "5559890",
+      "description": "fuel filter",
+      "quantity": 50.0,
+      "unitPrice": 10.14
+    },
+    {
+      "partNumber": "DZ9X189470088",
+      "description": "Steering Oil Tank Filter",
+      "quantity": 20.0,
+      "unitPrice": 3.77
+    },
+    {
+      "partNumber": "1000424655",
+      "description": "oil filter",
+      "quantity": 50.0,
+      "unitPrice": 2.32
+    },
+    {
+      "partNumber": "1000442956A",
+      "description": "fuel filter",
+      "quantity": 50.0,
+      "unitPrice": 2.9
+    },
+    {
+      "partNumber": "1000424916",
+      "description": "fuel filter",
+      "quantity": 50.0,
+      "unitPrice": 5.07
+    },
+    {
+      "partNumber": "1103010-260",
+      "description": "FUEL TANK CAP",
+      "quantity": 20.0,
+      "unitPrice": 3.39
+    },
+    {
+      "partNumber": "H150A22105AZF3-PT",
+      "description": "WHEEL STUDS REAR",
+      "quantity": 40.0,
+      "unitPrice": 1.7
+    },
+    {
+      "partNumber": "3806040-D824A",
+      "description": "Fuel level sensors",
+      "quantity": 10.0,
+      "unitPrice": 19.46
+    },
+    {
+      "partNumber": "1601210AA0H",
+      "description": "Clutch kit",
+      "quantity": 10.0,
+      "unitPrice": 147.78
+    },
+    {
+      "partNumber": "WG9716720002",
+      "description": "Headlamps HOWO",
+      "quantity": 20.0,
+      "unitPrice": 19.0
+    },
+    {
+      "partNumber": "WG9716720001",
+      "description": "Headlamps HOWO",
+      "quantity": 20.0,
+      "unitPrice": 19.0
+    },
+    {
+      "partNumber": "3711015-Q491Y",
+      "description": "Left Front  Headlamp",
+      "quantity": 20.0,
+      "unitPrice": 23.0
+    },
+    {
+      "partNumber": "3711020-Q491Y",
+      "description": "Right Front Headlamp",
+      "quantity": 20.0,
+      "unitPrice": 23.0
+    },
+    {
+      "partNumber": "WG9525720027",
+      "description": "Left Headlamp Assembly",
+      "quantity": 20.0,
+      "unitPrice": 33.1
+    },
+    {
+      "partNumber": "WG9525720028",
+      "description": "Right Headlamp Assembly",
+      "quantity": 20.0,
+      "unitPrice": 33.1
+    },
+    {
+      "partNumber": "WG9925720001",
+      "description": "Headlamp Assembly  RH",
+      "quantity": 20.0,
+      "unitPrice": 21.83
+    },
+    {
+      "partNumber": "WG9925720002",
+      "description": "Headlamp Assembly LH",
+      "quantity": 20.0,
+      "unitPrice": 21.83
+    },
+    {
+      "partNumber": "W3104051D01A",
+      "description": "Wheel Bolt",
+      "quantity": 100.0,
+      "unitPrice": 1.76
+    },
+    {
+      "partNumber": "3103051-4EB1",
+      "description": "Wheel Bolt - Front",
+      "quantity": 100.0,
+      "unitPrice": 1.26
+    },
+    {
+      "partNumber": "3103070-4E",
+      "description": "Wheel Nut - Front",
+      "quantity": 100.0,
+      "unitPrice": 0.77
+    },
+    {
+      "partNumber": "3501436-X117",
+      "description": "Front return  spring LONG",
+      "quantity": 100.0,
+      "unitPrice": 1.0
+    },
+    {
+      "partNumber": "3502437-Q805",
+      "description": "Front return  Spring - Short",
+      "quantity": 100.0,
+      "unitPrice": 1.0
+    },
+    {
+      "partNumber": "S1602110K185",
+      "description": "Master Cylinder Assy - Clutch",
+      "quantity": 20.0,
+      "unitPrice": 7.46
+    },
+    {
+      "partNumber": "5001020B242",
+      "description": "Shock Absorber Assembly-Before The Suspension",
+      "quantity": 30.0,
+      "unitPrice": 5.24
+    },
+    {
+      "partNumber": "5001020-Q824A",
+      "description": "Air Spring Assembly and Shock Absorber Assembly",
+      "quantity": 30.0,
+      "unitPrice": 15.61
+    },
+    {
+      "partNumber": "8202020-E09",
+      "description": "Right Outer Rearview Mirror Assembly",
+      "quantity": 4.0,
+      "unitPrice": 12.21
+    },
+    {
+      "partNumber": "6104015E109",
+      "description": "WINDOW REGULATOR LHS",
+      "quantity": 10.0,
+      "unitPrice": 6.11
+    },
+    {
+      "partNumber": "6104020E109",
+      "description": "WINDOW REGULATOR RHS FAW",
+      "quantity": 10.0,
+      "unitPrice": 6.11
+    },
+    {
+      "partNumber": "3104051-4EB1",
+      "description": "WHEEL STUD REAR",
+      "quantity": 100.0,
+      "unitPrice": 1.36
+    },
+    {
+      "partNumber": "CQ36120T",
+      "description": "WHEEL STUD INNER NUT REAR",
+      "quantity": 100.0,
+      "unitPrice": 0.41
+    },
+    {
+      "partNumber": "5001220-D850",
+      "description": "CAB AIRBAG REAR",
+      "quantity": 20.0,
+      "unitPrice": 12.89
+    },
+    {
+      "partNumber": "WG9719720026",
+      "description": "Fog lights",
+      "quantity": 15.0,
+      "unitPrice": 6.9
+    },
+    {
+      "partNumber": "WG9719720025",
+      "description": "Fog lights",
+      "quantity": 15.0,
+      "unitPrice": 6.9
+    },
+    {
+      "partNumber": "PU2747",
+      "description": "Air filter",
+      "quantity": 50.0,
+      "unitPrice": 12.6
+    },
+    {
+      "partNumber": "WG9100410104",
+      "description": "Front Wheel Bolt",
+      "quantity": 50.0,
+      "unitPrice": 1.3
+    },
+    {
+      "partNumber": "WG7117340001",
+      "description": "Front Wheel Nut",
+      "quantity": 50.0,
+      "unitPrice": 0.63
+    },
+    {
+      "partNumber": "WG7121340130",
+      "description": "Rear Wheel Stud Sets",
+      "quantity": 50.0,
+      "unitPrice": 1.14
+    },
+    {
+      "partNumber": "WG9731680031",
+      "description": "Rear shock absorbers",
+      "quantity": 20.0,
+      "unitPrice": 9.22
+    },
+    {
+      "partNumber": "WG9719582012",
+      "description": "Switch",
+      "quantity": 15.0,
+      "unitPrice": 1.42
+    },
+    {
+      "partNumber": "WG9725160510",
+      "description": "Thrust Bearing",
+      "quantity": 10.0,
+      "unitPrice": 11.5
+    },
+    {
+      "partNumber": "1117001-001-0000A",
+      "description": "FUEL FILTER",
+      "quantity": 50.0,
+      "unitPrice": 2.76
+    },
+    {
+      "partNumber": "WG9725190122",
+      "description": "AIR FILTER",
+      "quantity": 92.0,
+      "unitPrice": 10.0
+    },
+    {
+      "partNumber": "100042261",
+      "description": "Oil filter",
+      "quantity": 100.0,
+      "unitPrice": 4.0
+    },
+    {
+      "partNumber": "612600080933",
+      "description": "FUEL FILTER",
+      "quantity": 100.0,
+      "unitPrice": 4.71
+    },
+    {
+      "partNumber": "WG4075360001",
+      "description": "BRAKE BOOSTER FRONT LH",
+      "quantity": 15.0,
+      "unitPrice": 8.57
+    },
+    {
+      "partNumber": "WG4075360002",
+      "description": "BRAKE BOOSTER FRONT RH",
+      "quantity": 15.0,
+      "unitPrice": 8.57
+    },
+    {
+      "partNumber": "WG9000360900",
+      "description": "BRAKE BOOSTER REAR LH",
+      "quantity": 10.0,
+      "unitPrice": 27.86
+    },
+    {
+      "partNumber": "WG9000360901",
+      "description": "BRAKE BOOSTER REAR RH",
+      "quantity": 10.0,
+      "unitPrice": 27.86
+    },
+    {
+      "partNumber": "DZ15221212001",
+      "description": "Door assembly L",
+      "quantity": 3.0,
+      "unitPrice": 284.06
+    },
+    {
+      "partNumber": "DZ15221212002",
+      "description": "Door assembly R",
+      "quantity": 3.0,
+      "unitPrice": 284.06
+    },
+    {
+      "partNumber": "DZ96189722010",
+      "description": "headlight with day light L",
+      "quantity": 30.0,
+      "unitPrice": 35.51
+    },
+    {
+      "partNumber": "DZ96189722020",
+      "description": "headlight with day light R",
+      "quantity": 30.0,
+      "unitPrice": 35.51
+    },
+    {
+      "partNumber": "DZ95189811211",
+      "description": "tail light L",
+      "quantity": 35.0,
+      "unitPrice": 7.11
+    },
+    {
+      "partNumber": "DZ95189811212",
+      "description": "tail light R",
+      "quantity": 35.0,
+      "unitPrice": 7.11
+    },
+    {
+      "partNumber": "DZ98149532002",
+      "description": "radiatior",
+      "quantity": 2.0,
+      "unitPrice": 110.78
+    },
+    {
+      "partNumber": "DZ96259533002",
+      "description": "expanxion tank",
+      "quantity": 5.0,
+      "unitPrice": 15.62
+    },
+    {
+      "partNumber": "DZ15221440450",
+      "description": "rear shocks",
+      "quantity": 20.0,
+      "unitPrice": 10.0
+    },
+    {
+      "partNumber": "DZ98149430105",
+      "description": "drag links",
+      "quantity": 10.0,
+      "unitPrice": 21.43
+    },
+    {
+      "partNumber": "DZ90009430004",
+      "description": "trank rod",
+      "quantity": 10.0,
+      "unitPrice": 22.86
+    },
+    {
+      "partNumber": "HD90009448000",
+      "description": "brake discs",
+      "quantity": 10.0,
+      "unitPrice": 47.14
+    },
+    {
+      "partNumber": "HD90009368012",
+      "description": "brake booster（front）",
+      "quantity": 10.0,
+      "unitPrice": 8.57
+    },
+    {
+      "partNumber": "HD90009360059",
+      "description": "brake booster（rear）",
+      "quantity": 10.0,
+      "unitPrice": 21.43
+    },
+    {
+      "partNumber": "DZ98149590425",
+      "description": "engine mounting（front）",
+      "quantity": 20.0,
+      "unitPrice": 12.86
+    },
+    {
+      "partNumber": "DZ98149590402",
+      "description": "engine mounting（rear）",
+      "quantity": 20.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "DZ98149240241",
+      "description": "gear linkages cable",
+      "quantity": 20.0,
+      "unitPrice": 7.14
+    },
+    {
+      "partNumber": "H150A2269AZF3",
+      "description": "wheel studs（front）",
+      "quantity": 100.0,
+      "unitPrice": 1.29
+    },
+    {
+      "partNumber": "H150A22105AZF3",
+      "description": "wheel studs（rear）",
+      "quantity": 100.0,
+      "unitPrice": 1.57
+    },
+    {
+      "partNumber": "DZ9112340097",
+      "description": "brake plate",
+      "quantity": 10.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "81.50212.0032",
+      "description": "brake plate pin",
+      "quantity": 20.0,
+      "unitPrice": 1.29
+    },
+    {
+      "partNumber": "DZ14251217010",
+      "description": "Door assembly L",
+      "quantity": 3.0,
+      "unitPrice": 191.74
+    },
+    {
+      "partNumber": "DZ14251217020",
+      "description": "Door assembly R",
+      "quantity": 3.0,
+      "unitPrice": 191.74
+    },
+    {
+      "partNumber": "DZ95189811211",
+      "description": "tail light L",
+      "quantity": 40.0,
+      "unitPrice": 7.11
+    },
+    {
+      "partNumber": "DZ95189811212",
+      "description": "tail light R",
+      "quantity": 40.0,
+      "unitPrice": 7.11
+    },
+    {
+      "partNumber": "DZ95259532231",
+      "description": "radiatior",
+      "quantity": 2.0,
+      "unitPrice": 110.78
+    },
+    {
+      "partNumber": "DZ97259533010",
+      "description": "expanxion tank",
+      "quantity": 5.0,
+      "unitPrice": 13.49
+    },
+    {
+      "partNumber": "DZ14251430020",
+      "description": "Cab air bags(front)",
+      "quantity": 30.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "DZ14251440020",
+      "description": "Cab air bags(rear)",
+      "quantity": 30.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "DZ13241440080",
+      "description": "rear shocks",
+      "quantity": 40.0,
+      "unitPrice": 10.0
+    },
+    {
+      "partNumber": "DZ9100430017",
+      "description": "drag links",
+      "quantity": 10.0,
+      "unitPrice": 21.43
+    },
+    {
+      "partNumber": "81.46711.6725",
+      "description": "trank rod",
+      "quantity": 10.0,
+      "unitPrice": 22.86
+    },
+    {
+      "partNumber": "HD95009360001",
+      "description": "brake booster（front）",
+      "quantity": 10.0,
+      "unitPrice": 8.57
+    },
+    {
+      "partNumber": "6564060X",
+      "description": "starter motor",
+      "quantity": 5.0,
+      "unitPrice": 114.29
+    },
+    {
+      "partNumber": "DZ13241430080",
+      "description": "cab tilting bar",
+      "quantity": 5.0,
+      "unitPrice": 28.57
+    },
+    {
+      "partNumber": "DZ97259240365",
+      "description": "gear linkages cable",
+      "quantity": 20.0,
+      "unitPrice": 7.14
+    },
+    {
+      "partNumber": "H150A22105AZF3",
+      "description": "wheel studs（rear）",
+      "quantity": 100.0,
+      "unitPrice": 1.57
+    },
+    {
+      "partNumber": "DZ9112340097",
+      "description": "brake plate",
+      "quantity": 10.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "DZ9112340143",
+      "description": "brake plate",
+      "quantity": 10.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "DZ15221211011",
+      "description": "Door assembly L",
+      "quantity": 3.0,
+      "unitPrice": 153.39
+    },
+    {
+      "partNumber": "DZ15221211012",
+      "description": "Door assembly R",
+      "quantity": 3.0,
+      "unitPrice": 153.39
+    },
+    {
+      "partNumber": "DZ96189722010",
+      "description": "headlight with day light L",
+      "quantity": 20.0,
+      "unitPrice": 35.51
+    },
+    {
+      "partNumber": "DZ96189722020",
+      "description": "headlight with day light R",
+      "quantity": 20.0,
+      "unitPrice": 35.51
+    },
+    {
+      "partNumber": "DZ96259532033",
+      "description": "radiatior",
+      "quantity": 2.0,
+      "unitPrice": 110.78
+    },
+    {
+      "partNumber": "DZ97259533010",
+      "description": "expanxion tank",
+      "quantity": 5.0,
+      "unitPrice": 13.49
+    },
+    {
+      "partNumber": "DZ15221430800",
+      "description": "Cab air bags(front)",
+      "quantity": 20.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "DZ15221440800",
+      "description": "Cab air bags(rear)",
+      "quantity": 20.0,
+      "unitPrice": 15.71
+    },
+    {
+      "partNumber": "DZ9100430011",
+      "description": "drag links",
+      "quantity": 10.0,
+      "unitPrice": 21.43
+    },
+    {
+      "partNumber": "81.46711.6725",
+      "description": "trank rod",
+      "quantity": 10.0,
+      "unitPrice": 22.86
+    },
+    {
+      "partNumber": "HD95009360001",
+      "description": "brake booster（front）",
+      "quantity": 10.0,
+      "unitPrice": 8.57
+    },
+    {
+      "partNumber": "4974389X",
+      "description": "starter motor",
+      "quantity": 5.0,
+      "unitPrice": 114.29
+    },
+    {
+      "partNumber": "4974301X",
+      "description": "alternator",
+      "quantity": 5.0,
+      "unitPrice": 71.43
+    },
+    {
+      "partNumber": "DZ97259590209",
+      "description": "engine mounting（front）",
+      "quantity": 15.0,
+      "unitPrice": 12.86
+    },
+    {
+      "partNumber": "DZ13241430080",
+      "description": "cab tilting bar",
+      "quantity": 5.0,
+      "unitPrice": 28.57
+    },
+    {
+      "partNumber": "DZ97259240655",
+      "description": "gear linkages cable",
+      "quantity": 15.0,
+      "unitPrice": 7.14
+    },
+    {
+      "partNumber": "DZ13241210001",
+      "description": "Door assembly L",
+      "quantity": 3.0,
+      "unitPrice": 130.43
+    },
+    {
+      "partNumber": "DZ13241210040",
+      "description": "Door assembly R",
+      "quantity": 3.0,
+      "unitPrice": 130.43
+    },
+    {
+      "partNumber": "81.25225.6465",
+      "description": "tail light L",
+      "quantity": 30.0,
+      "unitPrice": 7.25
+    },
+    {
+      "partNumber": "81.25225.6464",
+      "description": "tail light R",
+      "quantity": 30.0,
+      "unitPrice": 7.25
+    },
+    {
+      "partNumber": "81.26430.0083",
+      "description": "wipers arm",
+      "quantity": 5.0,
+      "unitPrice": 4.27
+    },
+    {
+      "partNumber": "DZ95259532231",
+      "description": "radiatior",
+      "quantity": 2.0,
+      "unitPrice": 115.94
+    },
+    {
+      "partNumber": "81.41722.6051",
+      "description": "Cab air bags(front)",
+      "quantity": 20.0,
+      "unitPrice": 14.49
+    },
+    {
+      "partNumber": "DZ14251440020",
+      "description": "Cab air bags(rear)",
+      "quantity": 20.0,
+      "unitPrice": 14.49
+    },
+    {
+      "partNumber": "DZ95259680121",
+      "description": "front shocks",
+      "quantity": 30.0,
+      "unitPrice": 12.32
+    },
+    {
+      "partNumber": "DZ9100430011",
+      "description": "drag links",
+      "quantity": 10.0,
+      "unitPrice": 21.74
+    },
+    {
+      "partNumber": "DZ95189363007",
+      "description": "brake booster（rear）",
+      "quantity": 10.0,
+      "unitPrice": 26.09
+    },
+    {
+      "partNumber": "DZ93259820100",
+      "description": "lift pump",
+      "quantity": 15.0,
+      "unitPrice": 23.19
+    },
+    {
+      "partNumber": "DZ13241430080",
+      "description": "cab tilting bar",
+      "quantity": 5.0,
+      "unitPrice": 55.07
+    },
+    {
+      "partNumber": "DZ96259240321",
+      "description": "gear linkages cable",
+      "quantity": 20.0,
+      "unitPrice": 11.59
+    },
+    {
+      "partNumber": "DZ95189611300",
+      "description": "wheel studs（rear）",
+      "quantity": 100.0,
+      "unitPrice": 1.74
+    },
+    {
+      "partNumber": "DZ9112340143",
+      "description": "brake plate",
+      "quantity": 10.0,
+      "unitPrice": 15.94
+    },
+    {
+      "partNumber": "DZ9112340097",
+      "description": "brake plate",
+      "quantity": 10.0,
+      "unitPrice": 15.94
+    }
+  ]
+}

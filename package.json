@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "db:setup": "node --env-file=.env scripts/neon-setup.mjs",
     "db:check": "node --env-file=.env scripts/neon-check.mjs",
+    "products:import": "node --env-file=.env scripts/import-products.mjs",
     "verify": "npm run lint && npm run build"
   },
   "dependencies": {

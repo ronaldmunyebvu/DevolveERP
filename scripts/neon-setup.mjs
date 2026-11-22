@@ -1,6 +1,6 @@
 /**
- * Creates the Devolve ERP schema and seeds the single shop, its owner and the
- * starter categories/locations. Safe to run repeatedly.
+ * Creates the Devolve ERP schema and seeds the single main shop, its owner and
+ * the starter categories. Safe to run repeatedly.
  *
  * Usage:
  *   npm run db:setup
@@ -34,10 +34,7 @@ const categories = [
   'Tools & Consumables',
 ]
 
-const locations = [
-  { name: 'Main Shop', type: 'shop', isDefault: true },
-  { name: 'Warehouse', type: 'warehouse', isDefault: false },
-]
+const locations = [{ name: 'Main Shop', type: 'shop', isDefault: true }]
 
 const sequences = ['invoice', 'quotation', 'purchase', 'transfer', 'payment']
 

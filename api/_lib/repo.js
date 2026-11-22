@@ -64,21 +64,13 @@ export function createRepository({ query, one, withTransaction }, mail) {
     return `${prefix}-${String(row.last_value).padStart(4, '0')}`
   }
 
-  async function resolveLocation(tx, companyId, locationId) {
-    if (locationId) {
-      const located = await tx.one(`SELECT * FROM locations WHERE id = $1 AND company_id = $2`, [
-        locationId,
-        companyId,
-      ])
-      if (!located) throw httpError('That stock location was not found.', 404)
-      return located
-    }
-    const fallback = await tx.one(
+  async function resolveLocation(tx, companyId) {
+    const main = await tx.one(
       `SELECT * FROM locations WHERE company_id = $1 ORDER BY is_default DESC, created_at ASC LIMIT 1`,
       [companyId],
     )
-    if (!fallback) throw httpError('Create a stock location first.', 400)
-    return fallback
+    if (!main) throw httpError('Create the main shop first.', 400)
+    return main
   }
 
   async function postJournal(tx, ctx, entry) {
@@ -953,63 +945,18 @@ export function createRepository({ query, one, withTransaction }, mail) {
       async list(ctx) {
         return query(
           `SELECT l.*, (SELECT count(*)::int FROM product_stock_levels sl WHERE sl.location_id = l.id) AS product_count
-           FROM locations l WHERE l.company_id = $1 ORDER BY l.is_default DESC, l.name`,
+           FROM locations l WHERE l.company_id = $1 ORDER BY l.is_default DESC, created_at ASC LIMIT 1`,
           [ctx.companyId],
         )
       },
-      async create(ctx, payload) {
-        try {
-          return await withTransaction(async (tx) => {
-            if (payload.is_default) {
-              await tx.query('UPDATE locations SET is_default = false WHERE company_id = $1', [
-                ctx.companyId,
-              ])
-            }
-            return tx.one(
-              `INSERT INTO locations (company_id, name, type, address, is_default)
-               VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-              [
-                ctx.companyId,
-                text(payload.name),
-                text(payload.type) || 'shop',
-                text(payload.address) || null,
-                Boolean(payload.is_default),
-              ],
-            )
-          })
-        } catch (error) {
-          throw asError(error)
-        }
+      async create() {
+        throw httpError('This app uses one main shop only.', 400)
       },
-      async update(ctx, payload) {
-        return withTransaction(async (tx) => {
-          if (payload.is_default) {
-            await tx.query('UPDATE locations SET is_default = false WHERE company_id = $1', [
-              ctx.companyId,
-            ])
-          }
-          const row = await tx.one(
-            `UPDATE locations SET name = $2, type = $3, address = $4, is_default = $5
-             WHERE id = $1 AND company_id = $6 RETURNING *`,
-            [
-              payload.id,
-              text(payload.name),
-              text(payload.type) || 'shop',
-              text(payload.address) || null,
-              Boolean(payload.is_default),
-              ctx.companyId,
-            ],
-          )
-          if (!row) throw httpError('Location not found.', 404)
-          return row
-        })
+      async update() {
+        throw httpError('This app uses one main shop only.', 400)
       },
-      async remove(ctx, payload) {
-        await query('DELETE FROM locations WHERE id = $1 AND company_id = $2', [
-          payload.id,
-          ctx.companyId,
-        ])
-        return { id: payload.id }
+      async remove() {
+        throw httpError('The main shop cannot be removed.', 400)
       },
     },
 
@@ -1021,7 +968,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
           values.push(`%${text(filters.search)}%`)
           const i = values.length
           conditions.push(
-            `(p.name ILIKE $${i} OR p.sku ILIKE $${i} OR COALESCE(p.brand,'') ILIKE $${i}
+            `(p.name ILIKE $${i} OR p.sku ILIKE $${i} OR p.part_number ILIKE $${i} OR COALESCE(p.brand,'') ILIKE $${i}
               OR COALESCE(p.barcode,'') ILIKE $${i}
               OR EXISTS (SELECT 1 FROM unnest(p.tags) AS tag WHERE tag ILIKE $${i}))`,
           )
@@ -1042,7 +989,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
           )
         }
         return query(
-          `SELECT p.id, p.sku, p.barcode, p.name, p.description, p.category_id, p.brand, p.unit,
+          `SELECT p.id, p.sku, p.part_number, p.barcode, p.name, p.description, p.category_id, p.brand, p.unit,
                   p.cost_price::float AS cost_price, p.selling_price::float AS selling_price,
                   p.wholesale_price::float AS wholesale_price,
                   p.quantity_on_hand::float AS quantity_on_hand,
@@ -1065,19 +1012,22 @@ export function createRepository({ query, one, withTransaction }, mail) {
       },
       async create(ctx, payload) {
         try {
+          const partNumber = text(payload.part_number)
+          if (!partNumber) throw httpError('Enter the part number.', 400)
           return await withTransaction(async (tx) => {
             const location = await resolveLocation(tx, ctx.companyId, payload.location_id)
             const opening = Math.max(0, round3(payload.opening_quantity))
             const product = await tx.one(
               `INSERT INTO products
-                (company_id, sku, barcode, name, description, category_id, brand, unit, cost_price,
+                (company_id, sku, part_number, barcode, name, description, category_id, brand, unit, cost_price,
                  selling_price, wholesale_price, quantity_on_hand, reorder_level, location_id,
                  expiry_date, tags, status)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
                RETURNING *`,
               [
                 ctx.companyId,
                 text(payload.sku),
+                partNumber,
                 text(payload.barcode) || null,
                 text(payload.name),
                 text(payload.description) || null,
@@ -1140,13 +1090,15 @@ export function createRepository({ query, one, withTransaction }, mail) {
       },
       async update(ctx, payload) {
         try {
+          const partNumber = text(payload.part_number)
+          if (!partNumber) throw httpError('Enter the part number.', 400)
           const product = await one(
             `UPDATE products SET
                sku = $2, barcode = $3, name = $4, description = $5, category_id = $6, brand = $7,
                unit = $8, cost_price = $9, selling_price = $10, wholesale_price = $11,
                reorder_level = $12, location_id = $13, expiry_date = $14, tags = $15,
-               status = $16, updated_at = now()
-             WHERE id = $1 AND company_id = $17
+               status = $16, part_number = $17, updated_at = now()
+             WHERE id = $1 AND company_id = $18
              RETURNING id`,
             [
               payload.id,
@@ -1170,6 +1122,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
                     .map((tag) => tag.trim())
                     .filter(Boolean),
               payload.status === 'discontinued' ? 'discontinued' : 'active',
+              partNumber,
               ctx.companyId,
             ],
           )
@@ -1847,62 +1800,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
       async get(ctx, id) {
         return getTransferById(ctx, id)
       },
-      async create(ctx, payload) {
-        return withTransaction(async (tx) => {
-          if (!payload.from_location_id || !payload.to_location_id) {
-            throw httpError('Choose both the source and destination location.')
-          }
-          if (payload.from_location_id === payload.to_location_id) {
-            throw httpError('Source and destination locations must be different.')
-          }
-          if (!payload.items?.length) throw httpError('Add at least one item to the transfer.')
-          const from = await resolveLocation(tx, ctx.companyId, payload.from_location_id)
-          const to = await resolveLocation(tx, ctx.companyId, payload.to_location_id)
-          const transferNumber = await nextNumber(tx, ctx.companyId, 'transfer', 'TRF')
-          const transfer = await tx.one(
-            `INSERT INTO stock_transfers
-              (company_id, transfer_number, from_location_id, to_location_id, transfer_date, status, notes, created_by)
-             VALUES ($1,$2,$3,$4,$5,'completed',$6,$7) RETURNING *`,
-            [
-              ctx.companyId,
-              transferNumber,
-              from.id,
-              to.id,
-              dateValue(payload.transfer_date, today()),
-              text(payload.notes) || null,
-              ctx.userId,
-            ],
-          )
-          for (const item of payload.items) {
-            const quantity = round3(item.quantity)
-            if (!(quantity > 0) || !item.product_id) continue
-            await tx.query(
-              `INSERT INTO stock_transfer_items (transfer_id, product_id, quantity) VALUES ($1,$2,$3)`,
-              [transfer.id, item.product_id, quantity],
-            )
-            await changeStock(tx, ctx, {
-              productId: item.product_id,
-              locationId: from.id,
-              delta: -quantity,
-              type: 'transfer_out',
-              referenceType: 'transfer',
-              referenceId: transfer.id,
-              referenceNo: transferNumber,
-              notes: `Transfer to ${to.name}`,
-            })
-            await changeStock(tx, ctx, {
-              productId: item.product_id,
-              locationId: to.id,
-              delta: quantity,
-              type: 'transfer_in',
-              referenceType: 'transfer',
-              referenceId: transfer.id,
-              referenceNo: transferNumber,
-              notes: `Transfer from ${from.name}`,
-            })
-          }
-          return getTransferById(ctx, transfer.id, tx)
-        })
+      async create() {
+        throw httpError('Stock transfers are unavailable with one main shop only.', 400)
       },
       async remove(ctx, payload) {
         const transfer = await one(

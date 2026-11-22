@@ -370,6 +370,7 @@ export default function TransfersPage() {
   })
 
   const list = transfers.data || []
+  const canTransfer = (locations.data || []).length > 1
   const visible = useMemo(
     () =>
       list.filter((transfer) =>
@@ -411,7 +412,7 @@ export default function TransfersPage() {
     <div>
       <PageHeader
         title="Stock transfers"
-        description="Move inventory between branches and keep per-location stock accurate."
+        description="Review transfer history. This app uses one main shop."
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv} disabled={!visible.length}>
@@ -421,13 +422,19 @@ export default function TransfersPage() {
               <RefreshCw size={15} />
               Refresh
             </Button>
-            <Button onClick={() => setFormOpen(true)}>
+            <Button onClick={() => setFormOpen(true)} disabled={!canTransfer}>
               <Plus size={16} />
               New transfer
             </Button>
           </>
         }
       />
+
+      {!locations.loading && !canTransfer ? (
+        <Alert tone="info" className="mb-4">
+          Only the main shop is configured, so new stock transfers are unavailable.
+        </Alert>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Transfers" value={formatQuantity(stats.total)} hint={`${stats.completed} completed`} icon={ArrowRightLeft} />
@@ -478,10 +485,12 @@ export default function TransfersPage() {
             title={list.length ? 'No transfers match this view' : 'No stock transfers yet'}
             message={list.length ? 'Try a different search or date range.' : 'Move stock between locations when goods are shifted.'}
             action={
-              <Button onClick={() => setFormOpen(true)}>
-                <Plus size={16} />
-                New transfer
-              </Button>
+              canTransfer ? (
+                <Button onClick={() => setFormOpen(true)}>
+                  <Plus size={16} />
+                  New transfer
+                </Button>
+              ) : null
             }
           />
         ) : (

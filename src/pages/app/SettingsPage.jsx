@@ -54,8 +54,6 @@ const CURRENCIES = [
   'CAD',
 ]
 
-const LOCATION_TYPES = ['shop', 'warehouse', 'store', 'office']
-
 const EMPTY_COMPANY = {
   name: '',
   legal_name: '',
@@ -717,215 +715,47 @@ function CategoryFormModal({ open, onClose, editing, repo, onSaved }) {
 
 function LocationsTab() {
   const repo = useRepository()
-  const toast = useToast()
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [deleting, setDeleting] = useState(null)
-  const [deleteBusy, setDeleteBusy] = useState(false)
   const locations = useAsyncData(() => (repo ? repo.locations.list() : null), [repo], { enabled: Boolean(repo) })
   const list = locations.data || []
 
-  async function remove() {
-    if (!deleting) return
-    setDeleteBusy(true)
-    try {
-      await repo.locations.remove({ id: deleting.id })
-      toast.success('Location deleted.')
-      setDeleting(null)
-      locations.reload()
-    } catch (cause) {
-      toast.error(cause.message)
-    } finally {
-      setDeleteBusy(false)
-    }
-  }
-
   return (
-    <>
-      <Card>
-        <CardHeader
-          title="Stock locations"
-          description="Shops, warehouses and stores that hold inventory."
-          icon={MapPin}
-          actions={
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditing(null)
-                setFormOpen(true)
-              }}
-            >
-              <Plus size={15} />
-              Add location
-            </Button>
-          }
-        />
-        {locations.error ? (
-          <div className="p-6">
-            <Alert tone="danger">{locations.error}</Alert>
-          </div>
-        ) : locations.loading && !locations.data ? (
-          <Spinner />
-        ) : list.length === 0 ? (
-          <EmptyState icon={MapPin} title="No locations yet" message="Add at least one shop or warehouse to hold stock." />
-        ) : (
-          <TableWrapper>
-            <thead>
-              <tr>
-                <th>Location</th>
-                <th>Type</th>
-                <th>Address</th>
-                <th className="text-right">Products</th>
-                <th>Default</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((location) => (
-                <tr key={location.id}>
-                  <td className="font-medium text-ink-800">{location.name}</td>
-                  <td>{titleCase(location.type || '')}</td>
-                  <td className="text-ink-600">{location.address || '—'}</td>
-                  <td className="text-right tabular-nums">{location.product_count}</td>
-                  <td>{location.is_default ? <Badge tone="brand" size="sm">Default</Badge> : '—'}</td>
-                  <td>
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Edit"
-                        onClick={() => {
-                          setEditing(location)
-                          setFormOpen(true)
-                        }}
-                      >
-                        <Pencil size={15} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-500 hover:bg-red-50"
-                        title="Delete"
-                        onClick={() => setDeleting(location)}
-                      >
-                        <Trash2 size={15} />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </TableWrapper>
-        )}
-      </Card>
-
-      <LocationFormModal
-        open={formOpen}
-        onClose={() => {
-          setFormOpen(false)
-          setEditing(null)
-        }}
-        editing={editing}
-        repo={repo}
-        onSaved={() => locations.reload()}
+    <Card>
+      <CardHeader
+        title="Main shop"
+        description="This app uses one stock location. All inventory is held in the main shop."
+        icon={MapPin}
       />
-
-      <ConfirmDialog
-        open={Boolean(deleting)}
-        onClose={() => setDeleting(null)}
-        onConfirm={remove}
-        loading={deleteBusy}
-        title="Delete this location?"
-        message={`${deleting?.name || 'This location'} can only be deleted when it holds no stock and is not linked to transactions.`}
-        confirmLabel="Delete location"
-      />
-    </>
-  )
-}
-
-function LocationFormModal({ open, onClose, editing, repo, onSaved }) {
-  const toast = useToast()
-  const [form, setForm] = useState({ name: '', type: 'shop', address: '', is_default: false })
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!open) return
-    setForm({
-      name: editing?.name || '',
-      type: editing?.type || 'shop',
-      address: editing?.address || '',
-      is_default: Boolean(editing?.is_default),
-    })
-    setError('')
-  }, [open, editing])
-
-  const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
-
-  async function save(event) {
-    event.preventDefault()
-    setError('')
-    if (!form.name.trim()) {
-      setError('Enter a location name.')
-      return
-    }
-    setBusy(true)
-    try {
-      if (editing) await repo.locations.update({ id: editing.id, ...form })
-      else await repo.locations.create(form)
-      toast.success(`Location ${editing ? 'updated' : 'created'}.`)
-      onSaved()
-      onClose()
-    } catch (cause) {
-      setError(cause.message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={editing ? 'Edit location' : 'Add location'}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={busy}>
-            Cancel
-          </Button>
-          <Button onClick={save} loading={busy}>
-            {editing ? 'Save changes' : 'Add location'}
-          </Button>
-        </>
-      }
-    >
-      <form onSubmit={save} className="space-y-4">
-        {error && <Alert tone="danger">{error}</Alert>}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Name" required>
-            <Input value={form.name} onChange={set('name')} placeholder="Main shop" required />
-          </Field>
-          <Field label="Type">
-            <Select value={form.type} onChange={set('type')}>
-              {LOCATION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {titleCase(type)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Address" className="sm:col-span-2">
-            <Input value={form.address} onChange={set('address')} placeholder="Street address" />
-          </Field>
+      {locations.error ? (
+        <div className="p-6">
+          <Alert tone="danger">{locations.error}</Alert>
         </div>
-        <Checkbox
-          label="Default location"
-          description="New products and transactions will default to this location."
-          checked={form.is_default}
-          onChange={(event) => setForm((current) => ({ ...current, is_default: event.target.checked }))}
-        />
-      </form>
-    </Modal>
+      ) : locations.loading && !locations.data ? (
+        <Spinner />
+      ) : list.length === 0 ? (
+        <EmptyState icon={MapPin} title="No main shop yet" message="Run the database setup to create the main shop." />
+      ) : (
+        <TableWrapper>
+          <thead>
+            <tr>
+              <th>Location</th>
+              <th>Type</th>
+              <th>Address</th>
+              <th className="text-right">Products</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((location) => (
+              <tr key={location.id}>
+                <td className="font-medium text-ink-800">{location.name}</td>
+                <td>{titleCase(location.type || '')}</td>
+                <td className="text-ink-600">{location.address || '—'}</td>
+                <td className="text-right tabular-nums">{location.product_count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </TableWrapper>
+      )}
+    </Card>
   )
 }
 
@@ -959,7 +789,7 @@ export default function SettingsPage() {
           { value: 'company', label: 'Company', icon: Building2 },
           { value: 'staff', label: 'Staff', icon: Users },
           { value: 'categories', label: 'Categories', icon: Tags },
-          { value: 'locations', label: 'Locations', icon: MapPin },
+          { value: 'locations', label: 'Main shop', icon: MapPin },
         ]}
         value={tab}
         onChange={setTab}

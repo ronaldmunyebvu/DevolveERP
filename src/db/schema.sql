@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS products (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   sku text NOT NULL,
+  part_number text NOT NULL,
   barcode text,
   name text NOT NULL,
   description text,
@@ -144,7 +145,12 @@ CREATE TABLE IF NOT EXISTS products (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE products ADD COLUMN IF NOT EXISTS part_number text;
+UPDATE products SET part_number = NULLIF(btrim(sku), '') WHERE part_number IS NULL OR btrim(part_number) = '';
+UPDATE products SET part_number = id::text WHERE part_number IS NULL OR btrim(part_number) = '';
+ALTER TABLE products ALTER COLUMN part_number SET NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS products_company_sku_idx ON products (company_id, lower(sku));
+CREATE INDEX IF NOT EXISTS products_company_part_number_idx ON products (company_id, lower(part_number));
 CREATE INDEX IF NOT EXISTS products_company_name_idx ON products (company_id, lower(name));
 CREATE INDEX IF NOT EXISTS products_category_idx ON products (category_id);
 
