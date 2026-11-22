@@ -37,7 +37,6 @@ function productName(value) {
 }
 
 let logoPromise = null
-let truckPromise = null
 
 function fetchImageData(url) {
   return fetch(url, { cache: 'force-cache' })
@@ -71,11 +70,6 @@ async function getLogo(company) {
   }
   const result = await logoPromise
   return result.data
-}
-
-function getTruck() {
-  if (!truckPromise) truckPromise = fetchImageData('/truck.png')
-  return truckPromise
 }
 
 function money(currency, value) {
@@ -144,10 +138,10 @@ function drawLogoFallback(doc, x, y, size) {
   doc.text('D', x + size / 2, y + size * 0.68, { align: 'center' })
 }
 
-function drawHeader(doc, payload, logo, truck, compact = false) {
+function drawHeader(doc, payload, logo, compact = false) {
   const currency = payload.company?.currency || 'USD'
   const y = MARGIN
-  const logoSize = 52
+  const logoSize = 60
 
   if (logo) {
     try {
@@ -160,9 +154,6 @@ function drawHeader(doc, payload, logo, truck, compact = false) {
   }
 
   const textX = MARGIN + 62
-  if (truck && truck.startsWith('data:image/')) {
-    doc.addImage(truck, 'PNG', MARGIN + 312, y + 8, 72, 37)
-  }
   doc.setTextColor(...INK)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(compact ? 11 : 13)
@@ -178,6 +169,10 @@ function drawHeader(doc, payload, logo, truck, compact = false) {
     doc.text(String(line), textX, leftY)
     leftY += 9
   }
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(compact ? 8 : 9)
+  doc.setTextColor(...BRAND)
+  doc.text(LETTERHEAD.vendor, textX, leftY + 1)
 
   const rightX = PAGE_W - MARGIN
   doc.setTextColor(...BRAND)
@@ -430,9 +425,6 @@ function drawFooter(doc, payload) {
   LETTERHEAD.accounts.forEach((line, index) => {
     doc.text(line, bankX, y + 23 + index * 9)
   })
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(...BRAND)
-  doc.text(LETTERHEAD.vendor, bankX, y + 50)
 
   doc.setDrawColor(...BRAND)
   doc.setLineWidth(1)
@@ -446,8 +438,8 @@ function drawFooter(doc, payload) {
 
 export async function generateDocumentPdf(payload) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-  const [logo, truck] = await Promise.all([getLogo(payload.company), getTruck()])
-  let y = drawHeader(doc, payload, logo, truck)
+  const logo = await getLogo(payload.company)
+  let y = drawHeader(doc, payload, logo)
   y = drawCustomer(doc, payload, y + 6)
   y = drawTableHead(doc, y + 8)
 
@@ -526,7 +518,6 @@ export function printDocument(payload) {
   const currency = company.currency || 'USD'
   const origin = window.location.origin
   const logo = company.logo_url ? `${origin}${company.logo_url}` : `${origin}${LOGO_URL}`
-  const truck = `${origin}/truck.png`
   const rows = (payload.items || [])
     .map((item, index) => {
       const name = productName(item.name || item.description) || 'Item'
@@ -581,8 +572,7 @@ export function printDocument(payload) {
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #0b0b0d; font-size: 12px; margin: 0; }
   .head { display: flex; justify-content: space-between; gap: 24px; }
   .brand { display: flex; gap: 14px; }
-  .brand img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; }
-  .truck { width: 72px; height: auto; align-self: center; }
+  .brand img { width: 76px; height: 76px; border-radius: 8px; object-fit: cover; }
   .brand h1 { margin: 0; font-size: 21px; letter-spacing: .02em; }
   .brand p { margin: 3px 0 0; color: #66738c; font-size: 11px; }
   .doc { text-align: right; }
@@ -618,7 +608,7 @@ export function printDocument(payload) {
   .bank { margin-top: 24px; padding: 11px 13px; background: #f6f7f9; border: 1px solid #d5dae3; display: flex; justify-content: space-between; gap: 24px; font-size: 10px; line-height: 1.5; }
   .bank h3 { margin: 0 0 4px; color: #c1121f; font-size: 9px; letter-spacing: .08em; }
   .bank p { margin: 0; white-space: nowrap; }
-  .bank .vendor { margin-top: 6px; color: #c1121f; font-weight: 700; }
+  .brand .vendor { margin: 4px 0 0; color: #c1121f; font-weight: 700; font-size: 10px; }
   .foot { margin-top: 18px; padding-top: 8px; border-top: 2px solid #c1121f; display: flex; justify-content: space-between; gap: 16px; color: #66738c; font-size: 10px; }
 </style></head>
 <body>
@@ -629,9 +619,9 @@ export function printDocument(payload) {
         <h1>${escapeHtml(LETTERHEAD.name)}</h1>
         <p>${escapeHtml(LETTERHEAD.tagline)}</p>
         <p>${escapeHtml(LETTERHEAD.address)}<br>${escapeHtml(LETTERHEAD.email)}<br>${escapeHtml(LETTERHEAD.phone)}</p>
+        <p class="vendor">${escapeHtml(LETTERHEAD.vendor)}</p>
       </div>
     </div>
-    <img class="truck" src="${truck}" alt="">
     <div class="doc">
       <h2>${documentTitle(payload)}</h2>
       <div class="number">${escapeHtml(payload.number || '')}</div>
@@ -682,7 +672,6 @@ export function printDocument(payload) {
     </div>
     <div>
       ${LETTERHEAD.accounts.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}
-      <p class="vendor">${escapeHtml(LETTERHEAD.vendor)}</p>
     </div>
   </div>
   <div class="foot">

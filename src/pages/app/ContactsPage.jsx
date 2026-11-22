@@ -34,7 +34,6 @@ import {
 import { StatCard } from '@/components/domain/StatCard'
 import { StatusBadge } from '@/components/domain/StatusBadge'
 import {
-  CUSTOMER_TYPES,
   downloadCsv,
   formatDate,
   formatMoney,
@@ -51,7 +50,10 @@ const EMPTY_CUSTOMER = {
   city: '',
   address: '',
   customer_type: 'retail',
-  credit_limit: '',
+  vat_number: '',
+  tin_number: '',
+  is_zna: false,
+  vendor_number: '',
   status: 'active',
   notes: '',
 }
@@ -98,7 +100,22 @@ function ContactFormModal({ open, onClose, kind, editing, repo, onSaved }) {
     }
     setBusy(true)
     try {
-      const payload = isCustomer ? { ...form, credit_limit: Number(form.credit_limit) || 0 } : form
+      const isZna = form.is_zna === true || form.is_zna === 'true'
+      if (
+        isCustomer &&
+        isZna &&
+        (!String(form.vat_number || '').trim() || !String(form.vendor_number || '').trim())
+      ) {
+        setError('ZNA customers need a VAT number and a vendor number.')
+        return
+      }
+      const payload = isCustomer
+        ? {
+            ...form,
+            customer_type: 'retail',
+            is_zna: isZna,
+          }
+        : form
       const saved = editing
         ? await repo[isCustomer ? 'customers' : 'suppliers'].update({ id: editing.id, ...payload })
         : await repo[isCustomer ? 'customers' : 'suppliers'].create(payload)
@@ -158,17 +175,30 @@ function ContactFormModal({ open, onClose, kind, editing, repo, onSaved }) {
           </Field>
           {isCustomer ? (
             <>
-              <Field label="Customer type">
-                <Select value={form.customer_type} onChange={set('customer_type')}>
-                  {CUSTOMER_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {titleCase(type)}
-                    </option>
-                  ))}
+              <Field label="ZNA registered?">
+                <Select value={String(form.is_zna)} onChange={set('is_zna')}>
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
                 </Select>
               </Field>
-              <Field label="Credit limit" hint="0 means cash only.">
-                <Input type="number" min="0" step="0.01" value={form.credit_limit} onChange={set('credit_limit')} placeholder="0.00" />
+              <Field label="Customer Vat No" required={form.is_zna === true || form.is_zna === 'true'}>
+                <Input
+                  value={form.vat_number || ''}
+                  onChange={set('vat_number')}
+                  placeholder="VAT number"
+                  required={form.is_zna === true || form.is_zna === 'true'}
+                />
+              </Field>
+              <Field label="Vendor number" required={form.is_zna === true || form.is_zna === 'true'}>
+                <Input
+                  value={form.vendor_number || ''}
+                  onChange={set('vendor_number')}
+                  placeholder="Vendor number"
+                  required={form.is_zna === true || form.is_zna === 'true'}
+                />
+              </Field>
+              <Field label="TIN number" hint="Optional">
+                <Input value={form.tin_number || ''} onChange={set('tin_number')} placeholder="TIN number" />
               </Field>
             </>
           ) : (

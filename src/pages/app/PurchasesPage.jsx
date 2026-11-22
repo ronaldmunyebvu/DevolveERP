@@ -67,9 +67,9 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
   useEffect(() => {
     if (!open) return
     const defaultLocation = locations.find((location) => location.is_default) || locations[0]
-    setForm(emptyPurchase(defaultLocation?.id || ''))
+    setForm({ ...emptyPurchase(defaultLocation?.id || ''), tax_rate: String(company?.tax_rate ?? 15.5) })
     setError('')
-  }, [open, locations])
+  }, [open, locations, company?.tax_rate])
 
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
@@ -202,15 +202,8 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Tax rate (%)">
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.tax_rate}
-              onChange={set('tax_rate')}
-              placeholder="0"
-            />
+          <Field label="Tax rate (%)" hint="Applied automatically from company settings.">
+            <Input type="number" min="0" step="0.01" value={form.tax_rate} readOnly />
           </Field>
           <Field label="Notes">
             <Textarea value={form.notes} onChange={set('notes')} placeholder="Supplier invoice number, clearing details..." rows={2} />

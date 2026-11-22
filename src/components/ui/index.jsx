@@ -216,16 +216,11 @@ export function Badge({ tone = 'neutral', size = 'md', className, children, dot 
 export function Modal({ open, onClose, title, description, children, footer, size = 'md' }) {
   useEffect(() => {
     if (!open) return undefined
-    const onKey = (event) => {
-      if (event.key === 'Escape') onClose?.()
-    }
-    document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
-      document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 
@@ -233,7 +228,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
 
   return (
     <div className="no-print fixed inset-0 z-90 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-ink-950/50 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-ink-950/50 backdrop-blur-[2px]" aria-hidden="true" />
       <div
         role="dialog"
         aria-modal="true"

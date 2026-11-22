@@ -9,7 +9,7 @@ export const OPERATIONS = {
   'company.get': { auth: 'member' },
   'company.update': { auth: 'admin' },
 
-  'users.list': { auth: 'admin' },
+  'users.list': { auth: 'member' },
   'users.create': { auth: 'admin' },
   'users.update': { auth: 'admin' },
   'users.remove': { auth: 'admin' },

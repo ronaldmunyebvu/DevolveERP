@@ -95,7 +95,7 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
         issue_date: toDateInput(editing.issue_date),
         valid_until: toDateInput(editing.valid_until),
         discount: editing.discount ?? '',
-        tax_rate: editing.tax_rate ?? '',
+        tax_rate: editing.tax_rate ?? String(company?.tax_rate ?? 15.5),
         notes: editing.notes || '',
         items:
           editing.items?.length > 0
@@ -108,10 +108,10 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
             : [newLine('unit_price')],
       })
     } else {
-      setForm(emptyQuote())
+      setForm({ ...emptyQuote(), tax_rate: String(company?.tax_rate ?? 15.5) })
     }
     setError('')
-  }, [open, editing])
+  }, [open, editing, company?.tax_rate])
 
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
@@ -246,8 +246,8 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
           <Field label="Discount">
             <Input type="number" min="0" step="0.01" value={form.discount} onChange={set('discount')} placeholder="0.00" />
           </Field>
-          <Field label="Tax rate (%)">
-            <Input type="number" min="0" step="0.01" value={form.tax_rate} onChange={set('tax_rate')} placeholder="0" />
+          <Field label="Tax rate (%)" hint="Applied automatically from company settings.">
+            <Input type="number" min="0" step="0.01" value={form.tax_rate} readOnly />
           </Field>
           <Field label="Notes">
             <Textarea value={form.notes} onChange={set('notes')} rows={2} placeholder="Terms, lead time, delivery..." />

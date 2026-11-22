@@ -76,9 +76,9 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
   useEffect(() => {
     if (!open) return
     const defaultLocation = locations.find((location) => location.is_default) || locations[0]
-    setForm(emptySale(defaultLocation?.id || ''))
+    setForm({ ...emptySale(defaultLocation?.id || ''), tax_rate: String(company?.tax_rate ?? 15.5) })
     setError('')
-  }, [open, locations])
+  }, [open, locations, company?.tax_rate])
 
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
@@ -227,8 +227,8 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
           <Field label="Discount">
             <Input type="number" min="0" step="0.01" value={form.discount} onChange={set('discount')} placeholder="0.00" />
           </Field>
-          <Field label="Tax rate (%)">
-            <Input type="number" min="0" step="0.01" value={form.tax_rate} onChange={set('tax_rate')} placeholder="0" />
+          <Field label="Tax rate (%)" hint="Applied automatically from company settings.">
+            <Input type="number" min="0" step="0.01" value={form.tax_rate} readOnly />
           </Field>
           {!walkIn && (
             <Field label="Due date" hint="Leave blank for payment on receipt.">

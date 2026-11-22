@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS companies (
   website text,
   tax_number text,
   currency text NOT NULL DEFAULT 'USD',
-  tax_rate numeric(6,3) NOT NULL DEFAULT 0,
+  tax_rate numeric(6,3) NOT NULL DEFAULT 15.5,
   logo_url text,
   quotation_terms text,
   invoice_terms text,
@@ -107,12 +107,20 @@ CREATE TABLE IF NOT EXISTS customers (
   city text,
   customer_type text NOT NULL DEFAULT 'retail' CHECK (customer_type IN ('retail', 'wholesale', 'mechanic', 'fleet')),
   credit_limit numeric(14,2) NOT NULL DEFAULT 0,
+  vat_number text,
+  tin_number text,
+  is_zna boolean NOT NULL DEFAULT false,
+  vendor_number text,
   notes text,
   status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS customers_company_idx ON customers (company_id);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS vat_number text;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS tin_number text;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_zna boolean NOT NULL DEFAULT false;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS vendor_number text;
 
 CREATE TABLE IF NOT EXISTS products (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -337,10 +345,12 @@ CREATE TABLE IF NOT EXISTS cashbook_entries (
   source_type text,
   source_id uuid,
   notes text,
+  staff_id uuid REFERENCES users(id) ON DELETE SET NULL,
   created_by uuid REFERENCES users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS cashbook_company_date_idx ON cashbook_entries (company_id, entry_date DESC);
+ALTER TABLE cashbook_entries ADD COLUMN IF NOT EXISTS staff_id uuid REFERENCES users(id) ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS journal_entries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

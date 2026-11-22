@@ -131,8 +131,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
     if (!(amount > 0)) return null
     return tx.one(
       `INSERT INTO cashbook_entries
-        (company_id, entry_date, entry_type, category, description, amount, method, reference, source_type, source_id, notes, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        (company_id, entry_date, entry_type, category, description, amount, method, reference, source_type, source_id, notes, staff_id, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
       [
         ctx.companyId,
@@ -146,6 +146,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
         text(entry.sourceType) || null,
         entry.sourceId || null,
         text(entry.notes) || null,
+        entry.staffId || null,
         ctx.userId,
       ],
     )
@@ -1359,8 +1360,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
         return one(
           `INSERT INTO customers
             (company_id, name, company_name, email, phone, address, city, customer_type,
-             credit_limit, notes, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+             credit_limit, vat_number, tin_number, is_zna, vendor_number, notes, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
           [
             ctx.companyId,
             text(payload.name),
@@ -1371,6 +1372,10 @@ export function createRepository({ query, one, withTransaction }, mail) {
             text(payload.city) || null,
             text(payload.customer_type) || 'retail',
             round2(payload.credit_limit),
+            text(payload.vat_number) || null,
+            text(payload.tin_number) || null,
+            payload.is_zna === true || payload.is_zna === 'true',
+            text(payload.vendor_number) || null,
             text(payload.notes) || null,
             payload.status === 'inactive' ? 'inactive' : 'active',
           ],
@@ -1379,9 +1384,10 @@ export function createRepository({ query, one, withTransaction }, mail) {
       async update(ctx, payload) {
         const row = await one(
           `UPDATE customers SET name = $2, company_name = $3, email = $4, phone = $5,
-             address = $6, city = $7, customer_type = $8, credit_limit = $9, notes = $10,
-             status = $11, updated_at = now()
-           WHERE id = $1 AND company_id = $12 RETURNING *`,
+             address = $6, city = $7, customer_type = $8, credit_limit = $9,
+             vat_number = $10, tin_number = $11, is_zna = $12, vendor_number = $13,
+             notes = $14, status = $15, updated_at = now()
+           WHERE id = $1 AND company_id = $16 RETURNING *`,
           [
             payload.id,
             text(payload.name),
@@ -1392,6 +1398,10 @@ export function createRepository({ query, one, withTransaction }, mail) {
             text(payload.city) || null,
             text(payload.customer_type) || 'retail',
             round2(payload.credit_limit),
+            text(payload.vat_number) || null,
+            text(payload.tin_number) || null,
+            payload.is_zna === true || payload.is_zna === 'true',
+            text(payload.vendor_number) || null,
             text(payload.notes) || null,
             payload.status === 'inactive' ? 'inactive' : 'active',
             ctx.companyId,
@@ -1957,6 +1967,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
             method: payload.method,
             reference: payload.reference,
             notes: payload.notes,
+            staffId: payload.staff_id || null,
           })
           const account = text(payload.category) || 'General'
           await postJournal(tx, ctx, {

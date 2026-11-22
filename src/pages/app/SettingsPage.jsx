@@ -68,7 +68,7 @@ const EMPTY_COMPANY = {
   website: '',
   tax_number: '',
   currency: 'USD',
-  tax_rate: '',
+  tax_rate: 15.5,
   logo_url: '/logo2.jpg',
   quotation_terms: '',
   invoice_terms: '',

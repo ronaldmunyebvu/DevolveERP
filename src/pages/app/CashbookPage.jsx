@@ -46,7 +46,7 @@ import {
   toDateInput,
 } from '@/lib/utils'
 
-function CashbookFormModal({ open, onClose, repo, onSaved }) {
+function CashbookFormModal({ open, onClose, repo, onSaved, staff = [] }) {
   const toast = useToast()
   const { company } = useAuth()
   const currency = company?.currency || 'USD'
@@ -59,6 +59,7 @@ function CashbookFormModal({ open, onClose, repo, onSaved }) {
     method: 'cash',
     reference: '',
     notes: '',
+    staff_id: '',
   })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -74,6 +75,7 @@ function CashbookFormModal({ open, onClose, repo, onSaved }) {
       method: 'cash',
       reference: '',
       notes: '',
+      staff_id: '',
     })
     setError('')
   }, [open])
@@ -85,10 +87,22 @@ function CashbookFormModal({ open, onClose, repo, onSaved }) {
       ...current,
       entry_type: entryType,
       category: entryType === 'receipt' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0],
+      staff_id: '',
     }))
   }
 
   const categories = form.entry_type === 'receipt' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+  const isSalary = form.entry_type === 'payment' && form.category === 'Salaries'
+
+  function setStaff(event) {
+    const staffId = event.target.value
+    const member = staff.find((person) => person.id === staffId)
+    setForm((current) => ({
+      ...current,
+      staff_id: staffId,
+      description: member ? `Salary paid to ${member.full_name}` : current.description,
+    }))
+  }
 
   async function save(event) {
     event.preventDefault()
@@ -101,9 +115,17 @@ function CashbookFormModal({ open, onClose, repo, onSaved }) {
       setError('Describe this entry.')
       return
     }
+    if (isSalary && !form.staff_id) {
+      setError('Choose the staff member you are paying.')
+      return
+    }
     setBusy(true)
     try {
-      await repo.cashbook.create({ ...form, amount: Number(form.amount) })
+      await repo.cashbook.create({
+        ...form,
+        amount: Number(form.amount),
+        staff_id: isSalary ? form.staff_id : null,
+      })
       toast.success(`${titleCase(form.entry_type)} recorded.`)
       onSaved()
       onClose()
@@ -165,6 +187,20 @@ function CashbookFormModal({ open, onClose, repo, onSaved }) {
               ))}
             </Select>
           </Field>
+          {isSalary && (
+            <Field label="Staff member" required className="sm:col-span-2">
+              <Select value={form.staff_id} onChange={setStaff} required>
+                <option value="">Select staff member</option>
+                {staff
+                  .filter((person) => person.status !== 'inactive')
+                  .map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.full_name}
+                    </option>
+                  ))}
+              </Select>
+            </Field>
+          )}
           <Field label="Method">
             <Select value={form.method} onChange={set('method')}>
               {PAYMENT_METHODS.filter((method) => method !== 'credit').map((method) => (
@@ -218,6 +254,7 @@ export default function CashbookPage() {
     [repo, filters.from, filters.to],
     { enabled: Boolean(repo) },
   )
+  const staff = useAsyncData(() => (repo ? repo.users.list() : null), [repo], { enabled: Boolean(repo) })
 
   const list = entries.data || []
   const categories = useMemo(
@@ -456,7 +493,13 @@ export default function CashbookPage() {
         </Card>
       </div>
 
-      <CashbookFormModal open={formOpen} onClose={() => setFormOpen(false)} repo={repo} onSaved={refresh} />
+      <CashbookFormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        repo={repo}
+        onSaved={refresh}
+        staff={staff.data || []}
+      />
 
       <ConfirmDialog
         open={Boolean(deleting)}

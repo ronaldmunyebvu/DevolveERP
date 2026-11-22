@@ -81,7 +81,7 @@ async function ensureCompany(client) {
       'Harare',
       'Zimbabwe',
       'USD',
-      0,
+      15.5,
       '/logo2.jpg',
       'Prices are valid until the date shown. Stock is subject to availability. Goods remain the property of Devolve until paid in full.',
       'Payment is due by the date shown. Goods remain the property of Devolve until paid in full.',

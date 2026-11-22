@@ -56,7 +56,7 @@ function Brand({ collapsed = false }) {
       <img
         src="/logo2.jpg"
         alt="Devolve logo"
-        className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-white/15"
+        className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-white/15"
       />
       {!collapsed && (
         <div className="min-w-0">
@@ -243,7 +243,7 @@ export function AppShell({ children }) {
                 <img
                   src="/logo2.jpg"
                   alt="Devolve logo"
-                  className="h-9 w-9 rounded-lg object-cover ring-1 ring-white/15"
+                  className="h-12 w-12 rounded-lg object-cover ring-1 ring-white/15"
                 />
                 <nav className="flex flex-1 flex-col gap-1">
                   {NAV_SECTIONS.flatMap((section) => section.items)
