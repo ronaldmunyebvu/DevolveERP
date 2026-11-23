@@ -90,6 +90,7 @@ function buildPayload(record, type, company) {
   return {
     type,
     number: isInvoice ? record.invoice_number : record.quote_number,
+    purchaseOrderNumber: isInvoice ? record.purchase_order_number : null,
     issueDate: record.issue_date,
     secondaryDate: isInvoice ? record.due_date : record.valid_until,
     status: record.status,
@@ -191,6 +192,7 @@ function drawHeader(doc, payload, logo, compact = false) {
     payload.type === 'invoice'
       ? ['Due date', payload.secondaryDate ? formatDate(payload.secondaryDate) : 'On receipt']
       : ['Valid until', payload.secondaryDate ? formatDate(payload.secondaryDate) : '—'],
+    ...(payload.purchaseOrderNumber ? [['P.O. number', payload.purchaseOrderNumber]] : []),
     ['Currency', currency],
   ]
   let metaY = y + 46
@@ -542,6 +544,7 @@ export function printDocument(payload) {
     payload.type === 'invoice'
       ? ['Due date', payload.secondaryDate ? formatDate(payload.secondaryDate) : 'On receipt']
       : ['Valid until', payload.secondaryDate ? formatDate(payload.secondaryDate) : '—'],
+    ...(payload.purchaseOrderNumber ? [['P.O. number', payload.purchaseOrderNumber]] : []),
     ['Currency', currency],
   ]
     .map(([label, value]) => `<tr><th>${label}</th><td>${escapeHtml(value)}</td></tr>`)

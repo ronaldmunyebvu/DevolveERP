@@ -54,6 +54,7 @@ function emptySale(locationId = '') {
     customer_email: '',
     customer_address: '',
     location_id: locationId,
+    purchase_order_number: '',
     issue_date: toDateInput(new Date()),
     due_date: '',
     payment_method: 'cash',
@@ -191,6 +192,13 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
           </Field>
           <Field label="Issue date">
             <Input type="date" value={form.issue_date} onChange={set('issue_date')} />
+          </Field>
+          <Field label="Purchase order number" hint="Optional">
+            <Input
+              value={form.purchase_order_number}
+              onChange={set('purchase_order_number')}
+              placeholder="e.g. PO-1234"
+            />
           </Field>
         </div>
 
@@ -463,6 +471,9 @@ function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onVoid, cu
               <Badge tone="neutral">Issued {formatDate(data.issue_date)}</Badge>
               {data.due_date && <Badge tone={Number(data.balance) > 0 ? 'warning' : 'info'}>Due {formatDate(data.due_date)}</Badge>}
               <Badge tone="info">{data.location_name}</Badge>
+              {data.purchase_order_number && (
+                <Badge tone="neutral">P.O. {data.purchase_order_number}</Badge>
+              )}
               <div className="ml-auto">
                 <DocumentActions payload={payload} defaultEmail={data.customer_email || ''} size="sm" />
               </div>
@@ -668,6 +679,7 @@ export default function SalesPage() {
       'sales',
       [
         { label: 'Invoice', value: (row) => row.invoice_number },
+        { label: 'Purchase order number', value: (row) => row.purchase_order_number },
         { label: 'Customer', value: (row) => row.customer_name },
         { label: 'Issue date', value: (row) => row.issue_date },
         { label: 'Due date', value: (row) => row.due_date },

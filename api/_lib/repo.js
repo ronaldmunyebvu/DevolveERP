@@ -323,14 +323,15 @@ export function createRepository({ query, one, withTransaction }, mail) {
     // Insert as unpaid, then let recordReceipt apply the opening payment once.
     const invoice = await tx.one(
       `INSERT INTO invoices
-        (company_id, invoice_number, customer_id, customer_name, customer_email, customer_phone,
+        (company_id, invoice_number, purchase_order_number, customer_id, customer_name, customer_email, customer_phone,
          customer_address, location_id, status, issue_date, due_date, subtotal, discount, tax_rate,
          tax_amount, total_amount, amount_paid, balance, notes, quotation_id, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
        RETURNING *`,
       [
         ctx.companyId,
         invoiceNumber,
+        text(payload.purchase_order_number) || null,
         customer.id,
         customer.name,
         customer.email,

@@ -221,6 +221,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   invoice_number text NOT NULL,
+  purchase_order_number text,
   customer_id uuid REFERENCES customers(id) ON DELETE SET NULL,
   customer_name text,
   customer_email text,
@@ -243,6 +244,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS purchase_order_number text;
 CREATE UNIQUE INDEX IF NOT EXISTS invoices_number_idx ON invoices (company_id, invoice_number);
 CREATE INDEX IF NOT EXISTS invoices_company_date_idx ON invoices (company_id, issue_date DESC);
 CREATE INDEX IF NOT EXISTS invoices_customer_idx ON invoices (customer_id);
