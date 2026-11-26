@@ -531,15 +531,19 @@ export function createRepository({ query, one, withTransaction }, mail) {
     }
 
     const items = payload.items.map((item) => {
-      const product = products[item.product_id]
-      if (!product) throw httpError('Every quotation line needs a product.')
+      const product = item.product_id ? products[item.product_id] : null
+      if (item.product_id && !product) throw httpError('A product on this quotation was not found.', 404)
+      const description = text(item.description) || (product ? `${product.sku} - ${product.name}` : '')
+      if (!description) throw httpError('Enter a name for every quotation line.')
+      const quantity = round3(item.quantity)
+      if (!(quantity > 0)) throw httpError('Quotation quantities must be greater than zero.')
       return {
-        product_id: product.id,
-        description: text(item.description) || `${product.sku} - ${product.name}`,
-        quantity: round3(item.quantity),
+        product_id: product?.id || null,
+        description,
+        quantity,
         unit_price:
           item.unit_price === undefined || item.unit_price === ''
-            ? number(product.selling_price)
+            ? number(product?.selling_price)
             : round2(item.unit_price),
       }
     })
@@ -1758,6 +1762,9 @@ export function createRepository({ query, one, withTransaction }, mail) {
             [quotation.id],
           )
           if (!items.length) throw httpError('This quotation has no items.')
+          if (items.some((item) => !item.product_id)) {
+            throw httpError('Add the manually entered items to products before converting to an invoice.')
+          }
           const invoice = await insertInvoice(tx, ctx, {
             customer_id: quotation.customer_id,
             customer_name: quotation.customer_name,

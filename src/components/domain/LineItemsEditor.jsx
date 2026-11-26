@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronDown, Plus, Search, Trash2 } from 'lucide-react'
-import { Button, Input, TableWrapper } from '@/components/ui'
+import { Button, Input, Select, TableWrapper } from '@/components/ui'
 import { formatMoney, formatQuantity } from '@/lib/utils'
 
 function ProductPicker({ value, products, onChange }) {
@@ -172,6 +172,7 @@ export function newLine(priceKey = 'unit_price') {
     quantity: '',
     [priceKey]: '',
     expiry_date: '',
+    is_manual: false,
   }
 }
 
@@ -182,6 +183,7 @@ export function LineItemsEditor({
   priceKey = 'unit_price',
   priceLabel = 'Unit price',
   showExpiry = false,
+  allowManual = false,
   currency = 'USD',
   quantityLabel = 'Qty',
 }) {
@@ -191,7 +193,7 @@ export function LineItemsEditor({
 
   function chooseProduct(index, productId) {
     const product = products.find((entry) => entry.id === productId)
-    const patch = { product_id: productId }
+    const patch = { product_id: productId, is_manual: false }
     if (product) {
       if (priceKey === 'unit_cost') {
         patch.unit_cost = product.cost_price ?? ''
@@ -219,7 +221,7 @@ export function LineItemsEditor({
       <TableWrapper className="rounded-lg border border-ink-200">
         <thead>
           <tr>
-            <th className="min-w-[220px]">Product</th>
+            <th className="min-w-[220px]">{allowManual ? 'Product / item' : 'Product'}</th>
             <th className="w-28">{quantityLabel}</th>
             <th className="w-32">{priceLabel}</th>
             {showExpiry && <th className="w-36">Expiry</th>}
@@ -233,17 +235,45 @@ export function LineItemsEditor({
             return (
               <tr key={index}>
                 <td>
-                  <ProductPicker
-                    value={item.product_id || ''}
-                    products={products}
-                    onChange={(productId) => chooseProduct(index, productId)}
-                  />
-                  <Input
-                    value={item.description || ''}
-                    onChange={(event) => update(index, { description: event.target.value })}
-                    placeholder="Optional line description"
-                    className="mt-1.5 h-8 text-xs"
-                  />
+                  {allowManual && (
+                    <Select
+                      value={item.is_manual ? 'manual' : 'catalogue'}
+                      onChange={(event) =>
+                        update(index, {
+                          is_manual: event.target.value === 'manual',
+                          product_id: '',
+                          description: '',
+                        })
+                      }
+                      aria-label={`Source for line ${index + 1}`}
+                      className="mb-1.5 h-8 text-xs"
+                    >
+                      <option value="catalogue">From products</option>
+                      <option value="manual">Enter manually</option>
+                    </Select>
+                  )}
+                  {allowManual && item.is_manual ? (
+                    <Input
+                      value={item.description || ''}
+                      onChange={(event) => update(index, { description: event.target.value })}
+                      placeholder="Item name or description"
+                      aria-label={`Manual item for line ${index + 1}`}
+                    />
+                  ) : (
+                    <>
+                      <ProductPicker
+                        value={item.product_id || ''}
+                        products={products}
+                        onChange={(productId) => chooseProduct(index, productId)}
+                      />
+                      <Input
+                        value={item.description || ''}
+                        onChange={(event) => update(index, { description: event.target.value })}
+                        placeholder="Optional line description"
+                        className="mt-1.5 h-8 text-xs"
+                      />
+                    </>
+                  )}
                 </td>
                 <td>
                   <Input
@@ -296,15 +326,31 @@ export function LineItemsEditor({
           })}
         </tbody>
       </TableWrapper>
-      <Button
-        variant="secondary"
-        size="sm"
-        className="mt-2"
-        onClick={() => onChange([...items, newLine(priceKey)])}
-      >
-        <Plus size={14} />
-        Add line
-      </Button>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onChange([...items, newLine(priceKey)])}
+        >
+          <Plus size={14} />
+          Add line
+        </Button>
+        {allowManual && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange([...items, { ...newLine(priceKey), is_manual: true }])}
+          >
+            <Plus size={14} />
+            Add manual item
+          </Button>
+        )}
+      </div>
+      {allowManual && (
+        <p className="mt-1.5 text-xs text-ink-500">
+          Pick products from stock or enter items that are not in the database, with your own prices.
+        </p>
+      )}
     </div>
   )
 }

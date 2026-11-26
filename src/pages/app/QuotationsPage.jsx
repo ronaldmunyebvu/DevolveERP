@@ -107,6 +107,7 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
                 description: item.description || '',
                 quantity: item.quantity ?? '',
                 unit_price: item.unit_price ?? '',
+                is_manual: !item.product_id,
               }))
             : [newLine('unit_price')],
       })
@@ -132,8 +133,14 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
   async function save(event) {
     event.preventDefault()
     setError('')
-    if (!form.items.some((item) => item.product_id && Number(item.quantity) > 0)) {
-      setError('Add at least one product and quantity.')
+    const usable = (item) =>
+      (item.product_id || String(item.description || '').trim()) && Number(item.quantity) > 0
+    if (!form.items.some(usable)) {
+      setError('Add at least one product or manual item and a quantity.')
+      return
+    }
+    if (form.items.some((item) => usable(item) && item.is_manual && !(Number(item.unit_price) > 0))) {
+      setError('Enter a price for each manual item.')
       return
     }
     if (!form.customer_id && !form.customer_name.trim()) {
@@ -148,9 +155,9 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
         tax_rate: form.include_tax ? Number(form.tax_rate) || 0 : 0,
         include_tax: form.include_tax,
         items: form.items
-          .filter((item) => item.product_id && Number(item.quantity) > 0)
+          .filter(usable)
           .map((item) => ({
-            product_id: item.product_id,
+            product_id: item.product_id || null,
             description: item.description,
             quantity: Number(item.quantity),
             unit_price: Number(item.unit_price) || 0,
@@ -242,6 +249,7 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
             products={products}
             priceKey="unit_price"
             priceLabel="Quoted price"
+            allowManual
             currency={currency}
           />
         </div>
@@ -551,8 +559,9 @@ function QuotationDetailModal({ open, onClose, quotationId, repo, onChanged, onE
                 {data.items.map((item) => (
                   <tr key={item.id}>
                     <td>
-                      <p className="font-medium text-ink-800">{item.product_name}</p>
-                      <p className="text-[11px] text-ink-500">{item.sku}</p>
+                      <p className="font-medium text-ink-800">{item.product_name || item.description || 'Item'}</p>
+                      {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
+                      {!item.product_id && <p className="text-[11px] text-ink-500">Manual item</p>}
                     </td>
                     <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
                     <td className="text-right tabular-nums">{formatMoney(item.unit_price, currency)}</td>
