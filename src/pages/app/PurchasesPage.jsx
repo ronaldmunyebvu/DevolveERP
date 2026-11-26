@@ -19,6 +19,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   ConfirmDialog,
   EmptyState,
   Field,
@@ -51,6 +52,7 @@ function emptyPurchase(locationId = '') {
     expected_date: '',
     shipping_cost: '',
     tax_rate: '',
+    include_tax: false,
     notes: '',
     items: [newLine('unit_cost')],
   }
@@ -79,9 +81,9 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
       0,
     )
     const shipping = Number(form.shipping_cost) || 0
-    const tax = ((subtotal + shipping) * (Number(form.tax_rate) || 0)) / 100
+    const tax = form.include_tax ? ((subtotal + shipping) * (Number(form.tax_rate) || 0)) / 100 : 0
     return { subtotal, shipping, tax, total: subtotal + shipping + tax }
-  }, [form.items, form.shipping_cost, form.tax_rate])
+  }, [form.items, form.shipping_cost, form.tax_rate, form.include_tax])
 
   async function save(event) {
     event.preventDefault()
@@ -95,7 +97,8 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
       await repo.purchases.create({
         ...form,
         shipping_cost: Number(form.shipping_cost) || 0,
-        tax_rate: Number(form.tax_rate) || 0,
+        tax_rate: form.include_tax ? Number(form.tax_rate) || 0 : 0,
+        include_tax: form.include_tax,
         items: form.items
           .filter((item) => item.product_id && Number(item.quantity) > 0)
           .map((item) => ({
@@ -202,9 +205,28 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Tax rate (%)" hint="Applied automatically from company settings.">
-            <Input type="number" min="0" step="0.01" value={form.tax_rate} readOnly />
-          </Field>
+          <div className="space-y-2">
+            <Checkbox
+              label="Include tax"
+              description="Tick to add tax to this purchase."
+              checked={form.include_tax}
+              onChange={(event) => setForm((current) => ({ ...current, include_tax: event.target.checked }))}
+            />
+            <Field
+              label="Tax rate (%)"
+              hint={form.include_tax ? 'Applied from company settings.' : 'Tax is not included in this purchase.'}
+            >
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.include_tax ? form.tax_rate : ''}
+                readOnly
+                disabled={!form.include_tax}
+                placeholder="—"
+              />
+            </Field>
+          </div>
           <Field label="Notes">
             <Textarea value={form.notes} onChange={set('notes')} placeholder="Supplier invoice number, clearing details..." rows={2} />
           </Field>
@@ -219,10 +241,12 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
             <span className="text-ink-600">Shipping / clearing</span>
             <span className="font-medium tabular-nums">{formatMoney(totals.shipping, currency)}</span>
           </div>
-          <div className="flex justify-between py-1">
-            <span className="text-ink-600">Tax</span>
-            <span className="font-medium tabular-nums">{formatMoney(totals.tax, currency)}</span>
-          </div>
+          {form.include_tax && (
+            <div className="flex justify-between py-1">
+              <span className="text-ink-600">Tax</span>
+              <span className="font-medium tabular-nums">{formatMoney(totals.tax, currency)}</span>
+            </div>
+          )}
           <div className="mt-1 flex justify-between border-t border-ink-300 pt-2">
             <span className="font-semibold">Total</span>
             <span className="font-semibold tabular-nums">{formatMoney(totals.total, currency)}</span>
@@ -334,10 +358,12 @@ function PurchaseDetailModal({ open, onClose, purchaseId, repo, onChanged, onDel
               <span className="text-ink-500">Shipping / clearing</span>
               <span className="tabular-nums">{formatMoney(data.shipping_cost, currency)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-ink-500">Tax ({data.tax_rate}%)</span>
-              <span className="tabular-nums">{formatMoney(data.tax_amount, currency)}</span>
-            </div>
+            {Number(data.tax_rate) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-ink-500">Tax ({data.tax_rate}%)</span>
+                <span className="tabular-nums">{formatMoney(data.tax_amount, currency)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-ink-200 pt-1 font-semibold">
               <span>Total</span>
               <span className="tabular-nums">{formatMoney(data.total_amount, currency)}</span>

@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS include_tax boolean NOT NULL DEFAULT true;
 CREATE UNIQUE INDEX IF NOT EXISTS purchase_orders_number_idx ON purchase_orders (company_id, po_number);
 CREATE INDEX IF NOT EXISTS purchase_orders_company_date_idx ON purchase_orders (company_id, order_date DESC);
 
@@ -245,6 +246,8 @@ CREATE TABLE IF NOT EXISTS invoices (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS purchase_order_number text;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS include_tax boolean NOT NULL DEFAULT true;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS is_delivery_note boolean NOT NULL DEFAULT false;
 CREATE UNIQUE INDEX IF NOT EXISTS invoices_number_idx ON invoices (company_id, invoice_number);
 CREATE INDEX IF NOT EXISTS invoices_company_date_idx ON invoices (company_id, issue_date DESC);
 CREATE INDEX IF NOT EXISTS invoices_customer_idx ON invoices (customer_id);
@@ -284,6 +287,7 @@ CREATE TABLE IF NOT EXISTS quotations (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE quotations ADD COLUMN IF NOT EXISTS include_tax boolean NOT NULL DEFAULT true;
 CREATE UNIQUE INDEX IF NOT EXISTS quotations_number_idx ON quotations (company_id, quote_number);
 CREATE INDEX IF NOT EXISTS quotations_company_date_idx ON quotations (company_id, issue_date DESC);
 

@@ -19,6 +19,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   ConfirmDialog,
   EmptyState,
   Field,
@@ -55,12 +56,14 @@ function emptySale(locationId = '') {
     customer_address: '',
     location_id: locationId,
     purchase_order_number: '',
+    is_delivery_note: false,
     issue_date: toDateInput(new Date()),
     due_date: '',
     payment_method: 'cash',
     amount_paid: '',
     discount: '',
     tax_rate: '',
+    include_tax: false,
     notes: '',
     items: [newLine('unit_price')],
   }
@@ -90,11 +93,11 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
     )
     const discount = Math.min(Number(form.discount) || 0, subtotal)
     const taxable = subtotal - discount
-    const tax = (taxable * (Number(form.tax_rate) || 0)) / 100
+    const tax = form.include_tax ? (taxable * (Number(form.tax_rate) || 0)) / 100 : 0
     const total = taxable + tax
     const paid = Math.min(Number(form.amount_paid) || 0, total)
     return { subtotal, discount, tax, total, paid, balance: total - paid }
-  }, [form.items, form.discount, form.tax_rate, form.amount_paid])
+  }, [form.items, form.discount, form.tax_rate, form.include_tax, form.amount_paid])
 
   const walkIn = !form.customer_id
 
@@ -127,7 +130,9 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
         ...form,
         due_date: walkIn ? form.issue_date : form.due_date || form.issue_date,
         discount: Number(form.discount) || 0,
-        tax_rate: Number(form.tax_rate) || 0,
+        tax_rate: form.include_tax ? Number(form.tax_rate) || 0 : 0,
+        include_tax: form.include_tax,
+        is_delivery_note: form.is_delivery_note,
         amount_paid: Number(form.amount_paid) || 0,
         items: form.items
           .filter((item) => item.product_id && Number(item.quantity) > 0)
@@ -200,6 +205,17 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
               placeholder="e.g. PO-1234"
             />
           </Field>
+          <Field label="Document type">
+            <Select
+              value={form.is_delivery_note ? 'delivery' : 'invoice'}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, is_delivery_note: event.target.value === 'delivery' }))
+              }
+            >
+              <option value="invoice">Invoice</option>
+              <option value="delivery">Delivery note</option>
+            </Select>
+          </Field>
         </div>
 
         {!form.customer_id && (
@@ -235,9 +251,28 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
           <Field label="Discount">
             <Input type="number" min="0" step="0.01" value={form.discount} onChange={set('discount')} placeholder="0.00" />
           </Field>
-          <Field label="Tax rate (%)" hint="Applied automatically from company settings.">
-            <Input type="number" min="0" step="0.01" value={form.tax_rate} readOnly />
-          </Field>
+          <div className="space-y-2">
+            <Checkbox
+              label="Include tax"
+              description="Tick to add tax to this transaction."
+              checked={form.include_tax}
+              onChange={(event) => setForm((current) => ({ ...current, include_tax: event.target.checked }))}
+            />
+            <Field
+              label="Tax rate (%)"
+              hint={form.include_tax ? 'Applied from company settings.' : 'Tax is not included in this transaction.'}
+            >
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.include_tax ? form.tax_rate : ''}
+                readOnly
+                disabled={!form.include_tax}
+                placeholder="—"
+              />
+            </Field>
+          </div>
           {!walkIn && (
             <Field label="Due date" hint="Leave blank for payment on receipt.">
               <Input type="date" value={form.due_date} onChange={set('due_date')} />
@@ -293,10 +328,12 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
               <span className="font-medium tabular-nums">- {formatMoney(totals.discount, currency)}</span>
             </div>
           )}
-          <div className="flex justify-between py-1">
-            <span className="text-ink-600">Tax</span>
-            <span className="font-medium tabular-nums">{formatMoney(totals.tax, currency)}</span>
-          </div>
+          {form.include_tax && (
+            <div className="flex justify-between py-1">
+              <span className="text-ink-600">Tax</span>
+              <span className="font-medium tabular-nums">{formatMoney(totals.tax, currency)}</span>
+            </div>
+          )}
           <div className="mt-1 flex justify-between border-t border-ink-300 pt-2 font-semibold">
             <span>Total</span>
             <span className="tabular-nums">{formatMoney(totals.total, currency)}</span>
@@ -435,7 +472,7 @@ function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onVoid, cu
       <Modal
         open={open}
         onClose={onClose}
-        title={data?.invoice_number ? `Invoice ${data.invoice_number}` : 'Invoice'}
+        title={data?.invoice_number ? `${data.is_delivery_note ? 'Delivery note' : 'Invoice'} ${data.invoice_number}` : 'Invoice'}
         description={data?.customer_name}
         size="xl"
         footer={
@@ -468,6 +505,7 @@ function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onVoid, cu
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={data.status} />
+              {data.is_delivery_note && <Badge tone="purple">Delivery note</Badge>}
               <Badge tone="neutral">Issued {formatDate(data.issue_date)}</Badge>
               {data.due_date && <Badge tone={Number(data.balance) > 0 ? 'warning' : 'info'}>Due {formatDate(data.due_date)}</Badge>}
               <Badge tone="info">{data.location_name}</Badge>
@@ -556,10 +594,12 @@ function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onVoid, cu
                     <span className="tabular-nums">- {formatMoney(data.discount, currency)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-ink-500">Tax ({data.tax_rate}%)</span>
-                  <span className="tabular-nums">{formatMoney(data.tax_amount, currency)}</span>
-                </div>
+                {Number(data.tax_rate) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-ink-500">Tax ({data.tax_rate}%)</span>
+                    <span className="tabular-nums">{formatMoney(data.tax_amount, currency)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-ink-200 pt-1 font-semibold">
                   <span>Total</span>
                   <span className="tabular-nums">{formatMoney(data.total_amount, currency)}</span>
@@ -679,6 +719,7 @@ export default function SalesPage() {
       'sales',
       [
         { label: 'Invoice', value: (row) => row.invoice_number },
+        { label: 'Document type', value: (row) => (row.is_delivery_note ? 'Delivery note' : 'Invoice') },
         { label: 'Purchase order number', value: (row) => row.purchase_order_number },
         { label: 'Customer', value: (row) => row.customer_name },
         { label: 'Issue date', value: (row) => row.issue_date },
@@ -686,6 +727,7 @@ export default function SalesPage() {
         { label: 'Status', value: (row) => row.status },
         { label: 'Subtotal', value: (row) => row.subtotal },
         { label: 'Discount', value: (row) => row.discount },
+        { label: 'Tax included', value: (row) => (row.include_tax ? 'Yes' : 'No') },
         { label: 'Tax', value: (row) => row.tax_amount },
         { label: 'Total', value: (row) => row.total_amount },
         { label: 'Paid', value: (row) => row.amount_paid },
@@ -796,6 +838,11 @@ export default function SalesPage() {
                     >
                       {sale.invoice_number}
                     </button>
+                    {sale.is_delivery_note && (
+                      <Badge tone="purple" size="sm" className="mt-1">
+                        Delivery note
+                      </Badge>
+                    )}
                   </td>
                   <td>{sale.customer_name}</td>
                   <td>{formatDate(sale.issue_date)}</td>

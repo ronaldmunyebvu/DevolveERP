@@ -82,6 +82,7 @@ function amount(value) {
 }
 
 function documentTitle(payload) {
+  if (payload.type === 'invoice' && payload.isDeliveryNote) return 'DELIVERY NOTE'
   return payload.type === 'invoice' ? 'INVOICE' : 'QUOTATION'
 }
 
@@ -91,6 +92,7 @@ function buildPayload(record, type, company) {
     type,
     number: isInvoice ? record.invoice_number : record.quote_number,
     purchaseOrderNumber: isInvoice ? record.purchase_order_number : null,
+    isDeliveryNote: isInvoice && Boolean(record.is_delivery_note),
     issueDate: record.issue_date,
     secondaryDate: isInvoice ? record.due_date : record.valid_until,
     status: record.status,
@@ -496,6 +498,7 @@ export async function emailDocument(payload, to, message = '') {
       action: 'sendDocument',
       type: payload.type,
       number: payload.number,
+      isDeliveryNote: Boolean(payload.isDeliveryNote),
       to,
       customerName: payload.customer?.name,
       message,

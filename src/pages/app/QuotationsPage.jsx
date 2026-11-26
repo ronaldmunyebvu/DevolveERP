@@ -19,6 +19,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   ConfirmDialog,
   EmptyState,
   Field,
@@ -61,6 +62,7 @@ function emptyQuote() {
     valid_until: '',
     discount: '',
     tax_rate: '',
+    include_tax: false,
     notes: '',
     items: [newLine('unit_price')],
   }
@@ -96,6 +98,7 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
         valid_until: toDateInput(editing.valid_until),
         discount: editing.discount ?? '',
         tax_rate: editing.tax_rate ?? String(company?.tax_rate ?? 15.5),
+        include_tax: editing.include_tax ?? true,
         notes: editing.notes || '',
         items:
           editing.items?.length > 0
@@ -122,9 +125,9 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
     )
     const discount = Math.min(Number(form.discount) || 0, subtotal)
     const taxable = subtotal - discount
-    const tax = (taxable * (Number(form.tax_rate) || 0)) / 100
+    const tax = form.include_tax ? (taxable * (Number(form.tax_rate) || 0)) / 100 : 0
     return { subtotal, discount, tax, total: taxable + tax }
-  }, [form.items, form.discount, form.tax_rate])
+  }, [form.items, form.discount, form.tax_rate, form.include_tax])
 
   async function save(event) {
     event.preventDefault()
@@ -142,7 +145,8 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
       const payload = {
         ...form,
         discount: Number(form.discount) || 0,
-        tax_rate: Number(form.tax_rate) || 0,
+        tax_rate: form.include_tax ? Number(form.tax_rate) || 0 : 0,
+        include_tax: form.include_tax,
         items: form.items
           .filter((item) => item.product_id && Number(item.quantity) > 0)
           .map((item) => ({
@@ -246,9 +250,28 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
           <Field label="Discount">
             <Input type="number" min="0" step="0.01" value={form.discount} onChange={set('discount')} placeholder="0.00" />
           </Field>
-          <Field label="Tax rate (%)" hint="Applied automatically from company settings.">
-            <Input type="number" min="0" step="0.01" value={form.tax_rate} readOnly />
-          </Field>
+          <div className="space-y-2">
+            <Checkbox
+              label="Include tax"
+              description="Tick to add tax to this quotation."
+              checked={form.include_tax}
+              onChange={(event) => setForm((current) => ({ ...current, include_tax: event.target.checked }))}
+            />
+            <Field
+              label="Tax rate (%)"
+              hint={form.include_tax ? 'Applied from company settings.' : 'Tax is not included in this quotation.'}
+            >
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.include_tax ? form.tax_rate : ''}
+                readOnly
+                disabled={!form.include_tax}
+                placeholder="—"
+              />
+            </Field>
+          </div>
           <Field label="Notes">
             <Textarea value={form.notes} onChange={set('notes')} rows={2} placeholder="Terms, lead time, delivery..." />
           </Field>
@@ -265,10 +288,12 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
               <span className="font-medium tabular-nums">- {formatMoney(totals.discount, currency)}</span>
             </div>
           )}
-          <div className="flex justify-between py-1">
-            <span className="text-ink-600">Tax</span>
-            <span className="font-medium tabular-nums">{formatMoney(totals.tax, currency)}</span>
-          </div>
+          {form.include_tax && (
+            <div className="flex justify-between py-1">
+              <span className="text-ink-600">Tax</span>
+              <span className="font-medium tabular-nums">{formatMoney(totals.tax, currency)}</span>
+            </div>
+          )}
           <div className="mt-1 flex justify-between border-t border-ink-300 pt-2 font-semibold">
             <span>Total</span>
             <span className="tabular-nums">{formatMoney(totals.total, currency)}</span>
@@ -548,10 +573,12 @@ function QuotationDetailModal({ open, onClose, quotationId, repo, onChanged, onE
                   <span className="tabular-nums">- {formatMoney(data.discount, currency)}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-ink-500">Tax ({data.tax_rate}%)</span>
-                <span className="tabular-nums">{formatMoney(data.tax_amount, currency)}</span>
-              </div>
+              {Number(data.tax_rate) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-ink-500">Tax ({data.tax_rate}%)</span>
+                  <span className="tabular-nums">{formatMoney(data.tax_amount, currency)}</span>
+                </div>
+              )}
               <div className="flex justify-between border-t border-ink-200 pt-1 font-semibold">
                 <span>Total</span>
                 <span className="tabular-nums">{formatMoney(data.total_amount, currency)}</span>

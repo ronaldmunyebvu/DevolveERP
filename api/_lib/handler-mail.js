@@ -37,6 +37,7 @@ export default async function handler(event) {
       company,
       type,
       number,
+      isDeliveryNote: body.isDeliveryNote === true,
       message: String(body.message || ''),
       pdfBase64,
       filename: `${number.replace(/[^A-Za-z0-9._-]/g, '-')}.pdf`,

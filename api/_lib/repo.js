@@ -243,7 +243,9 @@ export function createRepository({ query, one, withTransaction }, mail) {
     }
   }
 
-  function calculateTotals(items, { discount = 0, taxRate = 0 } = {}) {
+  const wantsTax = (value) => value !== false && value !== 'false'
+
+  function calculateTotals(items, { discount = 0, taxRate = 0, includeTax = true } = {}) {
     const prepared = items.map((item) => {
       const quantity = round3(item.quantity)
       const unitPrice = round2(item.unit_price)
@@ -258,7 +260,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
     const subtotal = round2(prepared.reduce((sum, item) => sum + item.line_total, 0))
     const discountAmount = Math.min(round2(discount), subtotal)
     const taxable = round2(subtotal - discountAmount)
-    const taxAmount = round2((taxable * number(taxRate)) / 100)
+    const effectiveRate = wantsTax(includeTax) ? taxRate : 0
+    const taxAmount = round2((taxable * number(effectiveRate)) / 100)
     return {
       items: prepared,
       subtotal,
@@ -306,9 +309,12 @@ export function createRepository({ query, one, withTransaction }, mail) {
       }
     })
 
+    const includeTax = wantsTax(payload.include_tax)
+    const taxRate = includeTax ? round2(payload.tax_rate) : 0
     const totals = calculateTotals(items, {
       discount: payload.discount,
-      taxRate: payload.tax_rate,
+      taxRate,
+      includeTax,
     })
 
     const requestedPaid = Math.max(0, round2(payload.amount_paid))
@@ -324,10 +330,10 @@ export function createRepository({ query, one, withTransaction }, mail) {
     const invoice = await tx.one(
       `INSERT INTO invoices
         (company_id, invoice_number, purchase_order_number, customer_id, customer_name, customer_email, customer_phone,
-         customer_address, location_id, status, issue_date, due_date, subtotal, discount, tax_rate,
-         tax_amount, total_amount, amount_paid, balance, notes, quotation_id, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
-       RETURNING *`,
+         customer_address, location_id, status, issue_date, due_date, subtotal, discount, tax_rate, include_tax,
+         is_delivery_note, tax_amount, total_amount, amount_paid, balance, notes, quotation_id, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+        RETURNING *`,
       [
         ctx.companyId,
         invoiceNumber,
@@ -343,7 +349,9 @@ export function createRepository({ query, one, withTransaction }, mail) {
         due,
         totals.subtotal,
         totals.discount,
-        round2(payload.tax_rate),
+        taxRate,
+        includeTax,
+        payload.is_delivery_note === true || payload.is_delivery_note === 'true',
         totals.tax_amount,
         totals.total_amount,
         0,
@@ -536,9 +544,12 @@ export function createRepository({ query, one, withTransaction }, mail) {
       }
     })
 
+    const includeTax = wantsTax(payload.include_tax)
+    const taxRate = includeTax ? round2(payload.tax_rate) : 0
     const totals = calculateTotals(items, {
       discount: payload.discount,
-      taxRate: payload.tax_rate,
+      taxRate,
+      includeTax,
     })
 
     let quotation
@@ -547,9 +558,9 @@ export function createRepository({ query, one, withTransaction }, mail) {
         `UPDATE quotations SET
            customer_id = $2, customer_name = $3, customer_email = $4, customer_phone = $5,
            customer_address = $6, status = $7, issue_date = $8, valid_until = $9,
-           subtotal = $10, discount = $11, tax_rate = $12, tax_amount = $13, total_amount = $14,
-           notes = $15, updated_at = now()
-         WHERE id = $1 AND company_id = $16
+           subtotal = $10, discount = $11, tax_rate = $12, include_tax = $13,
+           tax_amount = $14, total_amount = $15, notes = $16, updated_at = now()
+         WHERE id = $1 AND company_id = $17
          RETURNING *`,
         [
           existing.id,
@@ -563,7 +574,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
           dateValue(payload.valid_until),
           totals.subtotal,
           totals.discount,
-          round2(payload.tax_rate),
+          taxRate,
+          includeTax,
           totals.tax_amount,
           totals.total_amount,
           text(payload.notes) || null,
@@ -576,10 +588,10 @@ export function createRepository({ query, one, withTransaction }, mail) {
       quotation = await tx.one(
         `INSERT INTO quotations
           (company_id, quote_number, customer_id, customer_name, customer_email, customer_phone,
-           customer_address, status, issue_date, valid_until, subtotal, discount, tax_rate,
+           customer_address, status, issue_date, valid_until, subtotal, discount, tax_rate, include_tax,
            tax_amount, total_amount, notes, created_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
-         RETURNING *`,
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+          RETURNING *`,
         [
           ctx.companyId,
           quoteNumber,
@@ -593,7 +605,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
           dateValue(payload.valid_until),
           totals.subtotal,
           totals.discount,
-          round2(payload.tax_rate),
+          taxRate,
+          includeTax,
           totals.tax_amount,
           totals.total_amount,
           text(payload.notes) || null,
@@ -1446,7 +1459,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
           })
           const subtotal = round2(items.reduce((sum, item) => sum + item.line_total, 0))
           const shipping = round2(payload.shipping_cost)
-          const taxRate = round2(payload.tax_rate)
+          const includeTax = wantsTax(payload.include_tax)
+          const taxRate = includeTax ? round2(payload.tax_rate) : 0
           const taxAmount = round2(((subtotal + shipping) * taxRate) / 100)
           const total = round2(subtotal + shipping + taxAmount)
           const status = ['draft', 'ordered', 'received'].includes(payload.status)
@@ -1457,9 +1471,9 @@ export function createRepository({ query, one, withTransaction }, mail) {
           const purchase = await tx.one(
             `INSERT INTO purchase_orders
               (company_id, po_number, supplier_id, location_id, status, order_date, expected_date,
-               subtotal, tax_rate, tax_amount, shipping_cost, total_amount, amount_paid, notes,
+               subtotal, tax_rate, include_tax, tax_amount, shipping_cost, total_amount, amount_paid, notes,
                created_by, received_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
              RETURNING *`,
             [
               ctx.companyId,
@@ -1471,6 +1485,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
               dateValue(payload.expected_date),
               subtotal,
               taxRate,
+              includeTax,
               taxAmount,
               shipping,
               total,
@@ -1760,6 +1775,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
             })),
             discount: quotation.discount,
             tax_rate: quotation.tax_rate,
+            include_tax: quotation.include_tax,
             amount_paid: payload.amount_paid || 0,
             payment_method: payload.payment_method,
             notes: quotation.notes,

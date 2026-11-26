@@ -169,13 +169,14 @@ export async function sendDocumentMail({
   company,
   type,
   number,
+  isDeliveryNote,
   message,
   pdfBase64,
   filename,
 }) {
   const send = transporter()
   if (!send) return false
-  const label = type === 'invoice' ? 'Invoice' : 'Quotation'
+  const label = type === 'invoice' ? (isDeliveryNote ? 'Delivery note' : 'Invoice') : 'Quotation'
   try {
     await send.sendMail({
       from: `"${company?.name || 'Devolve'}" <${process.env.MAIL_USER}>`,
