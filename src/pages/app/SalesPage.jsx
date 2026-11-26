@@ -564,20 +564,23 @@ export function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onV
                 </tr>
               </thead>
               <tbody>
-                {data.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <p className="font-medium text-ink-800">{item.product_name || item.description || 'Item'}</p>
-                      {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
-                      {item.description && item.description !== item.product_name && (
-                        <p className="text-[11px] text-ink-500">{item.description}</p>
-                      )}
-                    </td>
-                    <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
-                    <td className="text-right tabular-nums">{formatMoney(item.unit_price, currency)}</td>
-                    <td className="text-right tabular-nums">{formatMoney(item.line_total, currency)}</td>
-                  </tr>
-                ))}
+                {data.items.map((item) => {
+                  const detail = item.item_description ?? item.description
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <p className="font-medium text-ink-800">{item.product_name || detail || 'Item'}</p>
+                        {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
+                        {detail && detail !== item.product_name && (
+                          <p className="text-[11px] text-ink-500">{detail}</p>
+                        )}
+                      </td>
+                      <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
+                      <td className="text-right tabular-nums">{formatMoney(item.unit_price, currency)}</td>
+                      <td className="text-right tabular-nums">{formatMoney(item.line_total, currency)}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </TableWrapper>
 

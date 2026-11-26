@@ -105,7 +105,7 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
             ? editing.items.map((item) => ({
                 product_id: item.product_id || '',
                 name: item.item_name || (!item.product_id ? item.description || '' : ''),
-                description: item.product_id || item.item_name ? item.description || '' : '',
+                description: item.product_id ? item.description || '' : item.item_description || '',
                 quantity: item.quantity ?? '',
                 unit_price: item.unit_price ?? '',
                 is_manual: !item.product_id,
@@ -557,21 +557,24 @@ function QuotationDetailModal({ open, onClose, quotationId, repo, onChanged, onE
                 </tr>
               </thead>
               <tbody>
-                {data.items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <p className="font-medium text-ink-800">{item.product_name || item.description || 'Item'}</p>
-                      {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
-                      {item.description && item.description !== item.product_name && (
-                        <p className="text-[11px] text-ink-500">{item.description}</p>
-                      )}
-                      {!item.product_id && <p className="text-[11px] text-ink-500">Manual item</p>}
-                    </td>
-                    <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
-                    <td className="text-right tabular-nums">{formatMoney(item.unit_price, currency)}</td>
-                    <td className="text-right tabular-nums">{formatMoney(item.line_total, currency)}</td>
-                  </tr>
-                ))}
+                {data.items.map((item) => {
+                  const detail = item.item_description ?? item.description
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <p className="font-medium text-ink-800">{item.product_name || detail || 'Item'}</p>
+                        {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
+                        {detail && detail !== item.product_name && (
+                          <p className="text-[11px] text-ink-500">{detail}</p>
+                        )}
+                        {!item.product_id && <p className="text-[11px] text-ink-500">Manual item</p>}
+                      </td>
+                      <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
+                      <td className="text-right tabular-nums">{formatMoney(item.unit_price, currency)}</td>
+                      <td className="text-right tabular-nums">{formatMoney(item.line_total, currency)}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </TableWrapper>
 

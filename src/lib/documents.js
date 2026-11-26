@@ -105,7 +105,7 @@ function buildPayload(record, type, company) {
     items: (record.items || []).map((item) => ({
       sku: item.sku,
       name: item.product_name || productName(item.description) || item.description,
-      description: item.description,
+      description: item.item_description ?? item.description,
       unit: item.unit,
       quantity: Number(item.quantity) || 0,
       unit_price: Number(item.unit_price) || 0,
