@@ -262,6 +262,8 @@ CREATE TABLE IF NOT EXISTS invoice_items (
   unit_cost numeric(14,2) NOT NULL DEFAULT 0,
   line_total numeric(14,2) NOT NULL DEFAULT 0
 );
+ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS item_name text;
+UPDATE invoice_items SET item_name = description WHERE item_name IS NULL AND description IS NOT NULL;
 CREATE INDEX IF NOT EXISTS invoice_items_invoice_idx ON invoice_items (invoice_id);
 
 CREATE TABLE IF NOT EXISTS quotations (
@@ -300,6 +302,8 @@ CREATE TABLE IF NOT EXISTS quotation_items (
   unit_price numeric(14,2) NOT NULL DEFAULT 0,
   line_total numeric(14,2) NOT NULL DEFAULT 0
 );
+ALTER TABLE quotation_items ADD COLUMN IF NOT EXISTS item_name text;
+UPDATE quotation_items SET item_name = description WHERE item_name IS NULL AND description IS NOT NULL;
 CREATE INDEX IF NOT EXISTS quotation_items_quote_idx ON quotation_items (quotation_id);
 
 CREATE TABLE IF NOT EXISTS payments (

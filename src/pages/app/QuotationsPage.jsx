@@ -104,7 +104,8 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
           editing.items?.length > 0
             ? editing.items.map((item) => ({
                 product_id: item.product_id || '',
-                description: item.description || '',
+                name: item.item_name || (!item.product_id ? item.description || '' : ''),
+                description: item.product_id || item.item_name ? item.description || '' : '',
                 quantity: item.quantity ?? '',
                 unit_price: item.unit_price ?? '',
                 is_manual: !item.product_id,
@@ -134,7 +135,8 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
     event.preventDefault()
     setError('')
     const usable = (item) =>
-      (item.product_id || String(item.description || '').trim()) && Number(item.quantity) > 0
+      (item.product_id || (item.is_manual && String(item.name || '').trim())) &&
+      Number(item.quantity) > 0
     if (!form.items.some(usable)) {
       setError('Add at least one product or manual item and a quantity.')
       return
@@ -158,6 +160,7 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
           .filter(usable)
           .map((item) => ({
             product_id: item.product_id || null,
+            item_name: item.is_manual ? String(item.name || '').trim() : '',
             description: item.description,
             quantity: Number(item.quantity),
             unit_price: Number(item.unit_price) || 0,
@@ -265,20 +268,18 @@ function QuotationFormModal({ open, onClose, editing, customers, products, repo,
               checked={form.include_tax}
               onChange={(event) => setForm((current) => ({ ...current, include_tax: event.target.checked }))}
             />
-            <Field
-              label="Tax rate (%)"
-              hint={form.include_tax ? 'Applied from company settings.' : 'Tax is not included in this quotation.'}
-            >
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.include_tax ? form.tax_rate : ''}
-                readOnly
-                disabled={!form.include_tax}
-                placeholder="—"
-              />
-            </Field>
+            {form.include_tax && (
+              <Field label="Tax rate (%)" className="max-w-[8rem]">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.tax_rate}
+                  readOnly
+                  className="h-8 w-20 px-2 text-sm"
+                />
+              </Field>
+            )}
           </div>
           <Field label="Notes">
             <Textarea value={form.notes} onChange={set('notes')} rows={2} placeholder="Terms, lead time, delivery..." />
@@ -561,6 +562,9 @@ function QuotationDetailModal({ open, onClose, quotationId, repo, onChanged, onE
                     <td>
                       <p className="font-medium text-ink-800">{item.product_name || item.description || 'Item'}</p>
                       {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
+                      {item.description && item.description !== item.product_name && (
+                        <p className="text-[11px] text-ink-500">{item.description}</p>
+                      )}
                       {!item.product_id && <p className="text-[11px] text-ink-500">Manual item</p>}
                     </td>
                     <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>

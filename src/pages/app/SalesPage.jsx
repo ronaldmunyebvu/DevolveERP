@@ -47,7 +47,7 @@ import {
   toDateInput,
 } from '@/lib/utils'
 
-function emptySale(locationId = '') {
+function emptySale(locationId = '', deliveryNote = false) {
   return {
     customer_id: '',
     customer_name: '',
@@ -56,7 +56,7 @@ function emptySale(locationId = '') {
     customer_address: '',
     location_id: locationId,
     purchase_order_number: '',
-    is_delivery_note: false,
+    is_delivery_note: deliveryNote,
     issue_date: toDateInput(new Date()),
     due_date: '',
     payment_method: 'cash',
@@ -69,7 +69,16 @@ function emptySale(locationId = '') {
   }
 }
 
-function SaleFormModal({ open, onClose, customers, products, locations, repo, onCreated }) {
+export function SaleFormModal({
+  open,
+  onClose,
+  customers,
+  products,
+  locations,
+  repo,
+  onCreated,
+  deliveryNote = false,
+}) {
   const toast = useToast()
   const { company } = useAuth()
   const currency = company?.currency || 'USD'
@@ -80,9 +89,12 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
   useEffect(() => {
     if (!open) return
     const defaultLocation = locations.find((location) => location.is_default) || locations[0]
-    setForm({ ...emptySale(defaultLocation?.id || ''), tax_rate: String(company?.tax_rate ?? 15.5) })
+    setForm({
+      ...emptySale(defaultLocation?.id || '', deliveryNote),
+      tax_rate: String(company?.tax_rate ?? 15.5),
+    })
     setError('')
-  }, [open, locations, company?.tax_rate])
+  }, [open, locations, company?.tax_rate, deliveryNote])
 
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
@@ -112,8 +124,15 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
   async function save(event) {
     event.preventDefault()
     setError('')
-    if (!form.items.some((item) => item.product_id && Number(item.quantity) > 0)) {
-      setError('Add at least one product and quantity.')
+    const usable = (item) =>
+      (item.product_id || (item.is_manual && String(item.name || '').trim())) &&
+      Number(item.quantity) > 0
+    if (!form.items.some(usable)) {
+      setError('Add at least one product or manual item and a quantity.')
+      return
+    }
+    if (form.items.some((item) => usable(item) && item.is_manual && !(Number(item.unit_price) > 0))) {
+      setError('Enter a price for each manual item.')
       return
     }
     if (!form.customer_id && !form.customer_name.trim()) {
@@ -135,15 +154,22 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
         is_delivery_note: form.is_delivery_note,
         amount_paid: Number(form.amount_paid) || 0,
         items: form.items
-          .filter((item) => item.product_id && Number(item.quantity) > 0)
+          .filter(usable)
           .map((item) => ({
-            product_id: item.product_id,
+            product_id: item.product_id || null,
+            item_name: item.is_manual ? String(item.name || '').trim() : '',
             description: item.description,
             quantity: Number(item.quantity),
             unit_price: Number(item.unit_price) || 0,
           })),
       })
-      toast.success(totals.balance > 0 ? 'Credit invoice created.' : 'Invoice created and paid.')
+      toast.success(
+        deliveryNote
+          ? 'Delivery note created.'
+          : totals.balance > 0
+            ? 'Credit invoice created.'
+            : 'Invoice created and paid.',
+      )
       onCreated(invoice.id)
       onClose()
     } catch (cause) {
@@ -157,8 +183,12 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
     <Modal
       open={open}
       onClose={onClose}
-      title="New sale"
-      description="Create a cash or credit invoice. Stock is deducted immediately."
+      title={deliveryNote ? 'New delivery note' : 'New sale'}
+      description={
+        deliveryNote
+          ? 'Record goods leaving the business. Stock is deducted immediately.'
+          : 'Create a cash or credit invoice. Stock is deducted immediately.'
+      }
       size="xl"
       footer={
         <>
@@ -166,7 +196,7 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
             Cancel
           </Button>
           <Button onClick={save} loading={busy}>
-            Create invoice
+            {deliveryNote ? 'Create delivery note' : 'Create invoice'}
           </Button>
         </>
       }
@@ -205,17 +235,6 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
               placeholder="e.g. PO-1234"
             />
           </Field>
-          <Field label="Document type">
-            <Select
-              value={form.is_delivery_note ? 'delivery' : 'invoice'}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, is_delivery_note: event.target.value === 'delivery' }))
-              }
-            >
-              <option value="invoice">Invoice</option>
-              <option value="delivery">Delivery note</option>
-            </Select>
-          </Field>
         </div>
 
         {!form.customer_id && (
@@ -243,6 +262,7 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
             products={products}
             priceKey="unit_price"
             priceLabel="Selling price"
+            allowManual
             currency={currency}
           />
         </div>
@@ -258,20 +278,18 @@ function SaleFormModal({ open, onClose, customers, products, locations, repo, on
               checked={form.include_tax}
               onChange={(event) => setForm((current) => ({ ...current, include_tax: event.target.checked }))}
             />
-            <Field
-              label="Tax rate (%)"
-              hint={form.include_tax ? 'Applied from company settings.' : 'Tax is not included in this transaction.'}
-            >
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.include_tax ? form.tax_rate : ''}
-                readOnly
-                disabled={!form.include_tax}
-                placeholder="—"
-              />
-            </Field>
+            {form.include_tax && (
+              <Field label="Tax rate (%)" className="max-w-[8rem]">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.tax_rate}
+                  readOnly
+                  className="h-8 w-20 px-2 text-sm"
+                />
+              </Field>
+            )}
           </div>
           {!walkIn && (
             <Field label="Due date" hint="Leave blank for payment on receipt.">
@@ -439,7 +457,7 @@ function PaymentModal({ open, onClose, invoice, repo, onSaved, currency }) {
   )
 }
 
-function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onVoid, currency, company }) {
+export function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onVoid, currency, company }) {
   const toast = useToast()
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [confirmVoid, setConfirmVoid] = useState(false)
@@ -549,8 +567,11 @@ function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onVoid, cu
                 {data.items.map((item) => (
                   <tr key={item.id}>
                     <td>
-                      <p className="font-medium text-ink-800">{item.product_name}</p>
-                      <p className="text-[11px] text-ink-500">{item.sku}</p>
+                      <p className="font-medium text-ink-800">{item.product_name || item.description || 'Item'}</p>
+                      {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
+                      {item.description && item.description !== item.product_name && (
+                        <p className="text-[11px] text-ink-500">{item.description}</p>
+                      )}
                     </td>
                     <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
                     <td className="text-right tabular-nums">{formatMoney(item.unit_price, currency)}</td>

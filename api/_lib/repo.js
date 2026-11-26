@@ -282,7 +282,6 @@ export function createRepository({ query, one, withTransaction }, mail) {
 
     const location = await resolveLocation(tx, ctx.companyId, payload.location_id)
     const productIds = payload.items.map((item) => item.product_id).filter(Boolean)
-    if (!productIds.length) throw httpError('Every invoice line needs a product.')
 
     const products = {}
     for (const productId of new Set(productIds)) {
@@ -295,17 +294,24 @@ export function createRepository({ query, one, withTransaction }, mail) {
     }
 
     const items = payload.items.map((item) => {
-      const product = products[item.product_id]
+      const product = item.product_id ? products[item.product_id] : null
+      if (item.product_id && !product) throw httpError('A product on this invoice was not found.', 404)
+      const itemName = product ? '' : text(item.item_name) || text(item.description)
+      if (!product && !itemName) throw httpError('Enter a name for every manual invoice item.')
       const quantity = round3(item.quantity)
       if (!(quantity > 0)) throw httpError('Invoice quantities must be greater than zero.')
+      const unitPrice =
+        item.unit_price === undefined || item.unit_price === ''
+          ? number(product?.selling_price)
+          : round2(item.unit_price)
+      if (!product && !(unitPrice > 0)) throw httpError('Enter a price for every manual invoice item.')
       return {
-        product_id: product.id,
-        description: text(item.description) || `${product.sku} - ${product.name}`,
+        product_id: product?.id || null,
+        item_name: product ? null : itemName,
+        description: text(item.description) || null,
         quantity,
-        unit_price: item.unit_price === undefined || item.unit_price === ''
-          ? number(product.selling_price)
-          : round2(item.unit_price),
-        unit_cost: number(product.cost_price),
+        unit_price: unitPrice,
+        unit_cost: product ? number(product.cost_price) : 0,
       }
     })
 
@@ -366,11 +372,12 @@ export function createRepository({ query, one, withTransaction }, mail) {
     for (const item of totals.items) {
       await tx.query(
         `INSERT INTO invoice_items
-          (invoice_id, product_id, description, quantity, unit_price, unit_cost, line_total)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          (invoice_id, product_id, item_name, description, quantity, unit_price, unit_cost, line_total)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [
           invoice.id,
           item.product_id,
+          item.item_name,
           item.description,
           item.quantity,
           item.unit_price,
@@ -378,6 +385,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
           item.line_total,
         ],
       )
+      if (!item.product_id) continue
       totalCost = round2(totalCost + item.quantity * item.unit_cost)
       await changeStock(tx, ctx, {
         productId: item.product_id,
@@ -496,7 +504,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
 
     invoice.items = await runner.query(
       `SELECT ii.*, ii.quantity::float, ii.unit_price::float, ii.unit_cost::float, ii.line_total::float,
-              p.sku, p.name AS product_name, p.unit
+              p.sku, COALESCE(p.name, ii.item_name, ii.description) AS product_name, p.unit
        FROM invoice_items ii
        LEFT JOIN products p ON p.id = ii.product_id
        WHERE ii.invoice_id = $1
@@ -533,18 +541,21 @@ export function createRepository({ query, one, withTransaction }, mail) {
     const items = payload.items.map((item) => {
       const product = item.product_id ? products[item.product_id] : null
       if (item.product_id && !product) throw httpError('A product on this quotation was not found.', 404)
-      const description = text(item.description) || (product ? `${product.sku} - ${product.name}` : '')
-      if (!description) throw httpError('Enter a name for every quotation line.')
+      const itemName = product ? '' : text(item.item_name) || text(item.description)
+      if (!product && !itemName) throw httpError('Enter a name for every manual quotation item.')
       const quantity = round3(item.quantity)
       if (!(quantity > 0)) throw httpError('Quotation quantities must be greater than zero.')
+      const unitPrice =
+        item.unit_price === undefined || item.unit_price === ''
+          ? number(product?.selling_price)
+          : round2(item.unit_price)
+      if (!product && !(unitPrice > 0)) throw httpError('Enter a price for every manual quotation item.')
       return {
         product_id: product?.id || null,
-        description,
+        item_name: product ? null : itemName,
+        description: text(item.description) || null,
         quantity,
-        unit_price:
-          item.unit_price === undefined || item.unit_price === ''
-            ? number(product?.selling_price)
-            : round2(item.unit_price),
+        unit_price: unitPrice,
       }
     })
 
@@ -622,11 +633,12 @@ export function createRepository({ query, one, withTransaction }, mail) {
     for (const item of totals.items) {
       await tx.query(
         `INSERT INTO quotation_items
-          (quotation_id, product_id, description, quantity, unit_price, line_total)
-         VALUES ($1,$2,$3,$4,$5,$6)`,
+          (quotation_id, product_id, item_name, description, quantity, unit_price, line_total)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [
           quotation.id,
           item.product_id,
+          item.item_name,
           item.description,
           item.quantity,
           item.unit_price,
@@ -652,7 +664,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
     if (!quotation) throw httpError('Quotation not found.', 404)
     quotation.items = await runner.query(
       `SELECT qi.*, qi.quantity::float, qi.unit_price::float, qi.line_total::float,
-              p.sku, p.name AS product_name, p.unit
+              p.sku, COALESCE(p.name, qi.item_name, qi.description) AS product_name, p.unit
        FROM quotation_items qi
        LEFT JOIN products p ON p.id = qi.product_id
        WHERE qi.quotation_id = $1
@@ -1762,9 +1774,6 @@ export function createRepository({ query, one, withTransaction }, mail) {
             [quotation.id],
           )
           if (!items.length) throw httpError('This quotation has no items.')
-          if (items.some((item) => !item.product_id)) {
-            throw httpError('Add the manually entered items to products before converting to an invoice.')
-          }
           const invoice = await insertInvoice(tx, ctx, {
             customer_id: quotation.customer_id,
             customer_name: quotation.customer_name,
@@ -1775,7 +1784,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
             due_date: payload.due_date,
             location_id: payload.location_id,
             items: items.map((item) => ({
-              product_id: item.product_id,
+              product_id: item.product_id || null,
+              item_name: item.item_name || null,
               description: item.description,
               quantity: item.quantity,
               unit_price: item.unit_price,

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronDown, Plus, Search, Trash2 } from 'lucide-react'
-import { Button, Input, Select, TableWrapper } from '@/components/ui'
+import { Button, Input, TableWrapper } from '@/components/ui'
 import { formatMoney, formatQuantity } from '@/lib/utils'
 
 function ProductPicker({ value, products, onChange }) {
@@ -168,6 +168,7 @@ function ProductPicker({ value, products, onChange }) {
 export function newLine(priceKey = 'unit_price') {
   return {
     product_id: '',
+    name: '',
     description: '',
     quantity: '',
     [priceKey]: '',
@@ -193,7 +194,7 @@ export function LineItemsEditor({
 
   function chooseProduct(index, productId) {
     const product = products.find((entry) => entry.id === productId)
-    const patch = { product_id: productId, is_manual: false }
+    const patch = { product_id: productId, name: '', is_manual: false }
     if (product) {
       if (priceKey === 'unit_cost') {
         patch.unit_cost = product.cost_price ?? ''
@@ -235,30 +236,22 @@ export function LineItemsEditor({
             return (
               <tr key={index}>
                 <td>
-                  {allowManual && (
-                    <Select
-                      value={item.is_manual ? 'manual' : 'catalogue'}
-                      onChange={(event) =>
-                        update(index, {
-                          is_manual: event.target.value === 'manual',
-                          product_id: '',
-                          description: '',
-                        })
-                      }
-                      aria-label={`Source for line ${index + 1}`}
-                      className="mb-1.5 h-8 text-xs"
-                    >
-                      <option value="catalogue">From products</option>
-                      <option value="manual">Enter manually</option>
-                    </Select>
-                  )}
                   {allowManual && item.is_manual ? (
-                    <Input
-                      value={item.description || ''}
-                      onChange={(event) => update(index, { description: event.target.value })}
-                      placeholder="Item name or description"
-                      aria-label={`Manual item for line ${index + 1}`}
-                    />
+                    <>
+                      <Input
+                        value={item.name || ''}
+                        onChange={(event) => update(index, { name: event.target.value })}
+                        placeholder="Product name"
+                        aria-label={`Manual item name for line ${index + 1}`}
+                      />
+                      <Input
+                        value={item.description || ''}
+                        onChange={(event) => update(index, { description: event.target.value })}
+                        placeholder="Description (optional)"
+                        aria-label={`Manual item description for line ${index + 1}`}
+                        className="mt-1.5 h-8 text-xs"
+                      />
+                    </>
                   ) : (
                     <>
                       <ProductPicker
@@ -280,10 +273,11 @@ export function LineItemsEditor({
                     type="number"
                     min="0"
                     step="0.001"
+                    inputMode="decimal"
                     value={item.quantity}
                     onChange={(event) => update(index, { quantity: event.target.value })}
-                    placeholder="0"
-                    className="text-right"
+                    aria-label={`Quantity for line ${index + 1}`}
+                    className="relative z-10 bg-white text-right"
                   />
                 </td>
                 <td>
@@ -291,10 +285,11 @@ export function LineItemsEditor({
                     type="number"
                     min="0"
                     step="0.01"
+                    inputMode="decimal"
                     value={item[priceKey]}
                     onChange={(event) => update(index, { [priceKey]: event.target.value })}
-                    placeholder="0.00"
-                    className="text-right"
+                    aria-label={`${priceLabel} for line ${index + 1}`}
+                    className="relative z-10 bg-white text-right"
                   />
                 </td>
                 {showExpiry && (

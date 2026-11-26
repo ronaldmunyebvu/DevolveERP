@@ -16,6 +16,7 @@ import InventoryPage from '@/pages/app/InventoryPage'
 import PurchasesPage from '@/pages/app/PurchasesPage'
 import SalesPage from '@/pages/app/SalesPage'
 import QuotationsPage from '@/pages/app/QuotationsPage'
+import DeliveryNotesPage from '@/pages/app/DeliveryNotesPage'
 import ContactsPage from '@/pages/app/ContactsPage'
 import TransfersPage from '@/pages/app/TransfersPage'
 import CashbookPage from '@/pages/app/CashbookPage'
@@ -112,6 +113,14 @@ export default function App() {
             element={
               <RequireModule module="quotations">
                 <QuotationsPage />
+              </RequireModule>
+            }
+          />
+          <Route
+            path="delivery-notes"
+            element={
+              <RequireModule module="sales">
+                <DeliveryNotesPage />
               </RequireModule>
             }
           />
