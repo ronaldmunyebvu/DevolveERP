@@ -222,7 +222,7 @@ export function LineItemsEditor({
       <TableWrapper className="rounded-lg border border-ink-200">
         <thead>
           <tr>
-            <th className="min-w-[220px]">{allowManual ? 'Product / item' : 'Product'}</th>
+            <th className="min-w-[260px]">{allowManual ? 'Product / item' : 'Product'}</th>
             <th className="w-28">{quantityLabel}</th>
             <th className="w-32">{priceLabel}</th>
             {showExpiry && <th className="w-36">Expiry</th>}
@@ -235,40 +235,43 @@ export function LineItemsEditor({
             const lineTotal = Number(item.quantity || 0) * Number(item[priceKey] || 0)
             return (
               <tr key={index}>
-                <td>
-                  {allowManual && item.is_manual ? (
-                    <>
-                      <Input
-                        value={item.name || ''}
-                        onChange={(event) => update(index, { name: event.target.value })}
-                        placeholder="Product name"
-                        aria-label={`Manual item name for line ${index + 1}`}
-                      />
-                      <Input
-                        value={item.description || ''}
-                        onChange={(event) => update(index, { description: event.target.value })}
-                        placeholder="Description (optional)"
-                        aria-label={`Manual item description for line ${index + 1}`}
-                        className="mt-1.5 h-8 text-xs"
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <ProductPicker
-                        value={item.product_id || ''}
-                        products={products}
-                        onChange={(productId) => chooseProduct(index, productId)}
-                      />
-                      <Input
-                        value={item.description || ''}
-                        onChange={(event) => update(index, { description: event.target.value })}
-                        placeholder="Optional line description"
-                        className="mt-1.5 h-8 text-xs"
-                      />
-                    </>
-                  )}
+                <td className="align-top">
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    {allowManual && item.is_manual ? (
+                      <>
+                        <Input
+                          value={item.name || ''}
+                          onChange={(event) => update(index, { name: event.target.value })}
+                          placeholder="Product name"
+                          aria-label={`Manual item name for line ${index + 1}`}
+                          className="block"
+                        />
+                        <Input
+                          value={item.description || ''}
+                          onChange={(event) => update(index, { description: event.target.value })}
+                          placeholder="Description (optional)"
+                          aria-label={`Manual item description for line ${index + 1}`}
+                          className="block h-8! text-xs!"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <ProductPicker
+                          value={item.product_id || ''}
+                          products={products}
+                          onChange={(productId) => chooseProduct(index, productId)}
+                        />
+                        <Input
+                          value={item.description || ''}
+                          onChange={(event) => update(index, { description: event.target.value })}
+                          placeholder="Optional line description"
+                          className="block h-8! text-xs!"
+                        />
+                      </>
+                    )}
+                  </div>
                 </td>
-                <td>
+                <td className="align-top">
                   <Input
                     type="number"
                     min="0"
@@ -277,10 +280,10 @@ export function LineItemsEditor({
                     value={item.quantity}
                     onChange={(event) => update(index, { quantity: event.target.value })}
                     aria-label={`Quantity for line ${index + 1}`}
-                    className="relative z-10 bg-white text-right"
+                    className="relative z-10 block bg-white text-right"
                   />
                 </td>
-                <td>
+                <td className="align-top">
                   <Input
                     type="number"
                     min="0"
@@ -289,11 +292,11 @@ export function LineItemsEditor({
                     value={item[priceKey]}
                     onChange={(event) => update(index, { [priceKey]: event.target.value })}
                     aria-label={`${priceLabel} for line ${index + 1}`}
-                    className="relative z-10 bg-white text-right"
+                    className="relative z-10 block bg-white text-right"
                   />
                 </td>
                 {showExpiry && (
-                  <td>
+                  <td className="align-top">
                     <Input
                       type="date"
                       value={item.expiry_date || ''}
@@ -301,11 +304,11 @@ export function LineItemsEditor({
                     />
                   </td>
                 )}
-                <td className="text-right font-medium tabular-nums">
+                <td className="align-top text-right font-medium tabular-nums">
                   {formatMoney(lineTotal, currency)}
                   <p className="text-[10px] text-ink-400">{formatQuantity(item.quantity || 0)} units</p>
                 </td>
-                <td>
+                <td className="align-top">
                   <Button
                     variant="ghost"
                     size="icon"
