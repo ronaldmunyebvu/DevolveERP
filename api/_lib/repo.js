@@ -274,7 +274,40 @@ export function createRepository({ query, one, withTransaction }, mail) {
     }
   }
 
-  async function insertInvoice(tx, ctx, payload) {
+  async function reverseInvoicePostings(tx, ctx, invoice) {
+    const items = await tx.query(`SELECT * FROM invoice_items WHERE invoice_id = $1`, [invoice.id])
+    let cost = 0
+    for (const item of items) {
+      if (!item.product_id) continue
+      cost = round2(cost + number(item.quantity) * number(item.unit_cost))
+      await changeStock(tx, ctx, {
+        productId: item.product_id,
+        locationId: invoice.location_id,
+        delta: number(item.quantity),
+        unitCost: number(item.unit_cost),
+        type: 'return',
+        referenceType: 'invoice',
+        referenceId: invoice.id,
+        referenceNo: invoice.invoice_number,
+        notes: `Edited ${invoice.invoice_number}`,
+      })
+    }
+    await postJournal(tx, ctx, {
+      date: today(),
+      reference: invoice.invoice_number,
+      description: `Reverse invoice ${invoice.invoice_number} for editing`,
+      sourceType: 'invoice_edit_reversal',
+      sourceId: invoice.id,
+      lines: [
+        { account_name: 'Sales Revenue', debit: number(invoice.total_amount), credit: 0 },
+        { account_name: 'Accounts Receivable', debit: 0, credit: number(invoice.total_amount) },
+        { account_name: 'Inventory', debit: cost, credit: 0 },
+        { account_name: 'Cost of Goods Sold', debit: 0, credit: cost },
+      ],
+    })
+  }
+
+  async function insertInvoice(tx, ctx, payload, existing = null) {
     const customer = await customerSnapshot(tx, ctx.companyId, payload.customer_id, {
       name: payload.customer_name,
       email: payload.customer_email,
@@ -329,49 +362,88 @@ export function createRepository({ query, one, withTransaction }, mail) {
     })
 
     const requestedPaid = Math.max(0, round2(payload.amount_paid))
-    const amountPaid = Math.min(requestedPaid, totals.total_amount)
-
-    const invoiceNumber = await nextNumber(tx, ctx.companyId, 'invoice', 'INV')
+    const amountPaid = existing ? 0 : Math.min(requestedPaid, totals.total_amount)
     const issueDate = dateValue(payload.issue_date, today())
     // Walk-in sales are settled on the spot, so the due date defaults to the
     // issue date. Registered customers keep an explicit due date (or none).
     const due = dateValue(payload.due_date, null) || (customer.id ? null : issueDate)
+    let invoice
 
-    // Insert as unpaid, then let recordReceipt apply the opening payment once.
-    const invoice = await tx.one(
-      `INSERT INTO invoices
-        (company_id, invoice_number, purchase_order_number, customer_id, customer_name, customer_email, customer_phone,
-         customer_address, location_id, status, issue_date, due_date, subtotal, discount, tax_rate, include_tax,
-         is_delivery_note, tax_amount, total_amount, amount_paid, balance, notes, quotation_id, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
-        RETURNING *`,
-      [
-        ctx.companyId,
-        invoiceNumber,
-        text(payload.purchase_order_number) || null,
-        customer.id,
-        customer.name,
-        customer.email,
-        customer.phone,
-        customer.address,
-        location.id,
-        invoiceStatus(totals.total_amount, 0),
-        issueDate,
-        due,
-        totals.subtotal,
-        totals.discount,
-        taxRate,
-        includeTax,
-        payload.is_delivery_note === true || payload.is_delivery_note === 'true',
-        totals.tax_amount,
-        totals.total_amount,
-        0,
-        totals.total_amount,
-        text(payload.notes) || null,
-        payload.quotation_id || null,
-        ctx.userId,
-      ],
-    )
+    if (existing) {
+      await reverseInvoicePostings(tx, ctx, existing)
+      invoice = await tx.one(
+        `UPDATE invoices SET
+           purchase_order_number = $2, customer_id = $3, customer_name = $4,
+           customer_email = $5, customer_phone = $6, customer_address = $7,
+           location_id = $8, status = $9, issue_date = $10, due_date = $11,
+           subtotal = $12, discount = $13, tax_rate = $14, include_tax = $15,
+           is_delivery_note = $16, tax_amount = $17, total_amount = $18,
+           amount_paid = 0, balance = $19, notes = $20, updated_at = now()
+         WHERE id = $1 AND company_id = $21
+         RETURNING *`,
+        [
+          existing.id,
+          text(payload.purchase_order_number) || null,
+          customer.id,
+          customer.name,
+          customer.email,
+          customer.phone,
+          customer.address,
+          location.id,
+          invoiceStatus(totals.total_amount, 0),
+          issueDate,
+          due,
+          totals.subtotal,
+          totals.discount,
+          taxRate,
+          includeTax,
+          payload.is_delivery_note === true || payload.is_delivery_note === 'true',
+          totals.tax_amount,
+          totals.total_amount,
+          totals.total_amount,
+          text(payload.notes) || null,
+          ctx.companyId,
+        ],
+      )
+      await tx.query('DELETE FROM invoice_items WHERE invoice_id = $1', [existing.id])
+    } else {
+      const invoiceNumber = await nextNumber(tx, ctx.companyId, 'invoice', 'INV')
+      // Insert as unpaid, then let recordReceipt apply the opening payment once.
+      invoice = await tx.one(
+        `INSERT INTO invoices
+          (company_id, invoice_number, purchase_order_number, customer_id, customer_name, customer_email, customer_phone,
+           customer_address, location_id, status, issue_date, due_date, subtotal, discount, tax_rate, include_tax,
+           is_delivery_note, tax_amount, total_amount, amount_paid, balance, notes, quotation_id, created_by)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+          RETURNING *`,
+        [
+          ctx.companyId,
+          invoiceNumber,
+          text(payload.purchase_order_number) || null,
+          customer.id,
+          customer.name,
+          customer.email,
+          customer.phone,
+          customer.address,
+          location.id,
+          invoiceStatus(totals.total_amount, 0),
+          issueDate,
+          due,
+          totals.subtotal,
+          totals.discount,
+          taxRate,
+          includeTax,
+          payload.is_delivery_note === true || payload.is_delivery_note === 'true',
+          totals.tax_amount,
+          totals.total_amount,
+          0,
+          totals.total_amount,
+          text(payload.notes) || null,
+          payload.quotation_id || null,
+          ctx.userId,
+        ],
+      )
+    }
 
     let totalCost = 0
     for (const item of totals.items) {
@@ -399,14 +471,14 @@ export function createRepository({ query, one, withTransaction }, mail) {
         type: 'sale',
         referenceType: 'invoice',
         referenceId: invoice.id,
-        referenceNo: invoiceNumber,
-        notes: `Sold on ${invoiceNumber}`,
+        referenceNo: invoice.invoice_number,
+        notes: `Sold on ${invoice.invoice_number}`,
       })
     }
 
     await postJournal(tx, ctx, {
       date: invoice.issue_date,
-      reference: invoiceNumber,
+      reference: invoice.invoice_number,
       description: `Sale to ${customer.name}`,
       sourceType: 'invoice',
       sourceId: invoice.id,
@@ -1658,6 +1730,20 @@ export function createRepository({ query, one, withTransaction }, mail) {
       },
       async create(ctx, payload) {
         return withTransaction(async (tx) => insertInvoice(tx, ctx, payload))
+      },
+      async update(ctx, payload) {
+        return withTransaction(async (tx) => {
+          const existing = await tx.one(
+            `SELECT * FROM invoices WHERE id = $1 AND company_id = $2 FOR UPDATE`,
+            [payload.id, ctx.companyId],
+          )
+          if (!existing) throw httpError('Invoice not found.', 404)
+          if (existing.status === 'void') throw httpError('Void invoices cannot be edited.')
+          if (number(existing.amount_paid) > 0) {
+            throw httpError('Invoices with payments cannot be edited. Reverse the payments first.')
+          }
+          return insertInvoice(tx, ctx, payload, existing)
+        })
       },
       async addPayment(ctx, payload) {
         return withTransaction(async (tx) => {

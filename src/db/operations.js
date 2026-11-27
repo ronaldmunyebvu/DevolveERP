@@ -51,6 +51,7 @@ export const OPERATIONS = {
   'sales.list': { auth: 'member' },
   'sales.get': { auth: 'member' },
   'sales.create': { auth: 'member' },
+  'sales.update': { auth: 'member' },
   'sales.addPayment': { auth: 'member' },
   'sales.remove': { auth: 'member' },
   'sales.payments': { auth: 'member' },

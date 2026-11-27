@@ -4,6 +4,7 @@ import {
   Banknote,
   CreditCard,
   Eye,
+  Pencil,
   Plus,
   ReceiptText,
   RefreshCw,
@@ -77,6 +78,8 @@ export function SaleFormModal({
   locations,
   repo,
   onCreated,
+  onSaved,
+  editing = null,
   deliveryNote = false,
 }) {
   const toast = useToast()
@@ -85,16 +88,54 @@ export function SaleFormModal({
   const [form, setForm] = useState(emptySale())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const { data: editInvoice, loading: editLoading } = useAsyncData(
+    () => (repo && editing ? repo.sales.get(editing) : null),
+    [repo, editing, open],
+    { enabled: Boolean(open && repo && editing) },
+  )
 
   useEffect(() => {
     if (!open) return
     const defaultLocation = locations.find((location) => location.is_default) || locations[0]
-    setForm({
-      ...emptySale(defaultLocation?.id || '', deliveryNote),
-      tax_rate: String(company?.tax_rate ?? 15.5),
-    })
+    if (editing) {
+      if (!editInvoice) return
+      setForm({
+        ...emptySale(
+          editInvoice.location_id || defaultLocation?.id || '',
+          Boolean(editInvoice.is_delivery_note),
+        ),
+        customer_id: editInvoice.customer_id || '',
+        customer_name: editInvoice.customer_name || '',
+        customer_phone: editInvoice.customer_phone || '',
+        customer_email: editInvoice.customer_email || '',
+        customer_address: editInvoice.customer_address || '',
+        location_id: editInvoice.location_id || defaultLocation?.id || '',
+        purchase_order_number: editInvoice.purchase_order_number || '',
+        is_delivery_note: Boolean(editInvoice.is_delivery_note),
+        issue_date: editInvoice.issue_date || toDateInput(new Date()),
+        due_date: editInvoice.due_date || '',
+        discount: String(editInvoice.discount ?? ''),
+        tax_rate: String(editInvoice.tax_rate ?? company?.tax_rate ?? 15.5),
+        include_tax: Boolean(editInvoice.include_tax),
+        notes: editInvoice.notes || '',
+        items: (editInvoice.items || []).map((item) => ({
+          product_id: item.product_id || '',
+          name: item.item_name || '',
+          description: item.item_description ?? item.description ?? '',
+          quantity: item.quantity ?? '',
+          unit_price: item.unit_price ?? '',
+          expiry_date: item.expiry_date || '',
+          is_manual: !item.product_id,
+        })),
+      })
+    } else {
+      setForm({
+        ...emptySale(defaultLocation?.id || '', deliveryNote),
+        tax_rate: String(company?.tax_rate ?? 15.5),
+      })
+    }
     setError('')
-  }, [open, locations, company?.tax_rate, deliveryNote])
+  }, [open, editing, editInvoice, locations, company?.tax_rate, deliveryNote])
 
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
@@ -114,12 +155,12 @@ export function SaleFormModal({
   const walkIn = !form.customer_id
 
   useEffect(() => {
-    if (!open || !walkIn) return
+    if (!open || !walkIn || editing) return
     const next = totals.total > 0 ? totals.total.toFixed(2) : ''
     setForm((current) =>
       current.amount_paid === next ? current : { ...current, amount_paid: next },
     )
-  }, [open, walkIn, totals.total])
+  }, [open, walkIn, totals.total, editing])
 
   async function save(event) {
     event.preventDefault()
@@ -145,14 +186,14 @@ export function SaleFormModal({
     }
     setBusy(true)
     try {
-      const invoice = await repo.sales.create({
+      const payload = {
         ...form,
         due_date: walkIn ? form.issue_date : form.due_date || form.issue_date,
         discount: Number(form.discount) || 0,
         tax_rate: form.include_tax ? Number(form.tax_rate) || 0 : 0,
         include_tax: form.include_tax,
         is_delivery_note: form.is_delivery_note,
-        amount_paid: Number(form.amount_paid) || 0,
+        amount_paid: editing ? 0 : Number(form.amount_paid) || 0,
         items: form.items
           .filter(usable)
           .map((item) => ({
@@ -162,15 +203,26 @@ export function SaleFormModal({
             quantity: Number(item.quantity),
             unit_price: Number(item.unit_price) || 0,
           })),
-      })
+      }
+      const invoice = editing
+        ? await repo.sales.update({ ...payload, id: editing })
+        : await repo.sales.create(payload)
       toast.success(
-        deliveryNote
-          ? 'Delivery note created.'
-          : totals.balance > 0
-            ? 'Credit invoice created.'
-            : 'Invoice created and paid.',
+        editing
+          ? 'Invoice updated.'
+          : deliveryNote
+            ? 'Delivery note created.'
+            : totals.balance > 0
+              ? 'Credit invoice created.'
+              : 'Invoice created and paid.',
       )
-      onCreated(invoice.id)
+      if (editing) {
+        onSaved?.(invoice)
+      } else if (onCreated) {
+        onCreated(invoice.id)
+      } else {
+        onSaved?.(invoice)
+      }
       onClose()
     } catch (cause) {
       setError(cause.message)
@@ -183,11 +235,13 @@ export function SaleFormModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={deliveryNote ? 'New delivery note' : 'New sale'}
+      title={editing ? 'Edit invoice' : deliveryNote ? 'New delivery note' : 'New sale'}
       description={
-        deliveryNote
-          ? 'Record goods leaving the business. Stock is deducted immediately.'
-          : 'Create a cash or credit invoice. Stock is deducted immediately.'
+        editing
+          ? 'Update this invoice. Stock movements and the sale journal are reversed and reposted on save.'
+          : deliveryNote
+            ? 'Record goods leaving the business. Stock is deducted immediately.'
+            : 'Create a cash or credit invoice. Stock is deducted immediately.'
       }
       size="xl"
       footer={
@@ -195,14 +249,19 @@ export function SaleFormModal({
           <Button variant="secondary" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <Button onClick={save} loading={busy}>
-            {deliveryNote ? 'Create delivery note' : 'Create invoice'}
+          <Button onClick={save} loading={busy || Boolean(editing && editLoading)} disabled={Boolean(editing && !editInvoice)}>
+            {editing ? 'Save changes' : deliveryNote ? 'Create delivery note' : 'Create invoice'}
           </Button>
         </>
       }
     >
       <form onSubmit={save} className="space-y-4">
         {error && <Alert tone="danger">{error}</Alert>}
+        {editing && (
+          <Alert tone="info">
+            Existing payments are not changed here. Use “Record payment” after saving if you need to adjust them.
+          </Alert>
+        )}
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Customer" hint="Leave blank for a walk-in.">
             <Select value={form.customer_id} onChange={set('customer_id')}>
@@ -296,40 +355,44 @@ export function SaleFormModal({
               <Input type="date" value={form.due_date} onChange={set('due_date')} />
             </Field>
           )}
-          <Field
-            label="Payment received now"
-            hint={
-              walkIn
-                ? 'Walk-in sales are paid in full now. The amount follows the invoice total.'
-                : undefined
-            }
-          >
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.amount_paid}
-              onChange={set('amount_paid')}
-              placeholder="0.00"
-              readOnly={walkIn}
-              className={walkIn ? 'bg-ink-50' : undefined}
-            />
-          </Field>
-          <Field label="Payment method">
-            <Select value={form.payment_method} onChange={set('payment_method')}>
-              {PAYMENT_METHODS.map((method) => (
-                <option key={method} value={method}>
-                  {titleCase(method)}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          {!editing && (
+            <>
+              <Field
+                label="Payment received now"
+                hint={
+                  walkIn
+                    ? 'Walk-in sales are paid in full now. The amount follows the invoice total.'
+                    : undefined
+                }
+              >
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.amount_paid}
+                  onChange={set('amount_paid')}
+                  placeholder="0.00"
+                  readOnly={walkIn}
+                  className={walkIn ? 'bg-ink-50' : undefined}
+                />
+              </Field>
+              <Field label="Payment method">
+                <Select value={form.payment_method} onChange={set('payment_method')}>
+                  {PAYMENT_METHODS.map((method) => (
+                    <option key={method} value={method}>
+                      {titleCase(method)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </>
+          )}
           <Field label="Notes">
             <Textarea value={form.notes} onChange={set('notes')} rows={2} placeholder="Delivery instructions, order reference..." />
           </Field>
         </div>
 
-        {totals.balance > 0 && (
+        {!editing && totals.balance > 0 && (
           <Alert tone="warning" icon={CreditCard}>
             This is a credit sale. The customer will owe {formatMoney(totals.balance, currency)} after the payment entered.
           </Alert>
@@ -681,6 +744,7 @@ export default function SalesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState({ search: '', status: '' })
   const [formOpen, setFormOpen] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [viewing, setViewing] = useState(null)
 
   const sales = useAsyncData(() => (repo ? repo.sales.list() : null), [repo], { enabled: Boolean(repo) })
@@ -694,7 +758,7 @@ export default function SalesPage() {
 
   useEffect(() => {
     if (searchParams.get('new') === '1') {
-      setFormOpen(true)
+      openCreate()
       const next = new URLSearchParams(searchParams)
       next.delete('new')
       setSearchParams(next, { replace: true })
@@ -730,6 +794,21 @@ export default function SalesPage() {
       next.delete('invoice')
       setSearchParams(next, { replace: true })
     }
+  }
+
+  function openCreate() {
+    setEditingId(null)
+    setFormOpen(true)
+  }
+
+  function openEdit(id) {
+    setEditingId(id)
+    setFormOpen(true)
+  }
+
+  function closeForm() {
+    setFormOpen(false)
+    setEditingId(null)
   }
 
   function refreshAll() {
@@ -775,7 +854,7 @@ export default function SalesPage() {
               <RefreshCw size={15} />
               Refresh
             </Button>
-            <Button onClick={() => setFormOpen(true)}>
+            <Button onClick={openCreate}>
               <Plus size={16} />
               New sale
             </Button>
@@ -830,7 +909,7 @@ export default function SalesPage() {
             title={list.length ? 'No invoices match these filters' : 'No sales yet'}
             message={list.length ? 'Try a different search or status.' : 'Create your first invoice to start selling.'}
             action={
-              <Button onClick={() => setFormOpen(true)}>
+              <Button onClick={openCreate}>
                 <Plus size={16} />
                 New sale
               </Button>
@@ -879,6 +958,19 @@ export default function SalesPage() {
                   </td>
                   <td>
                     <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={
+                          sale.status === 'void' || Number(sale.amount_paid) > 0
+                            ? 'Paid or void invoices cannot be edited'
+                            : 'Edit'
+                        }
+                        disabled={sale.status === 'void' || Number(sale.amount_paid) > 0}
+                        onClick={() => openEdit(sale.id)}
+                      >
+                        <Pencil size={16} />
+                      </Button>
                       <Button variant="ghost" size="icon" title="View" onClick={() => setViewing(sale.id)}>
                         <Eye size={16} />
                       </Button>
@@ -893,14 +985,15 @@ export default function SalesPage() {
 
       <SaleFormModal
         open={formOpen}
-        onClose={() => setFormOpen(false)}
+        onClose={closeForm}
+        editing={editingId}
         customers={customers.data || []}
         products={products.data || []}
         locations={locations.data || []}
         repo={repo}
-        onCreated={(id) => {
+        onSaved={(invoice) => {
           refreshAll()
-          setViewing(id)
+          setViewing(invoice.id)
         }}
       />
 
