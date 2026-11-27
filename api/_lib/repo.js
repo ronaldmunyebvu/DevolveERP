@@ -772,7 +772,16 @@ export function createRepository({ query, one, withTransaction }, mail) {
     if (!purchase) throw httpError('Purchase order not found.', 404)
     purchase.items = await db.query(
       `SELECT poi.*, poi.quantity::float, poi.unit_cost::float, poi.line_total::float,
-              p.sku, p.name AS product_name, p.unit
+              p.sku,
+              CASE WHEN p.id IS NOT NULL THEN p.name ELSE split_part(poi.description, chr(10), 1) END AS product_name,
+              CASE WHEN p.id IS NOT NULL THEN '' ELSE split_part(poi.description, chr(10), 1) END AS item_name,
+              CASE
+                WHEN p.id IS NOT NULL THEN poi.description
+                WHEN position(chr(10) in poi.description) > 0
+                  THEN substring(poi.description from position(chr(10) in poi.description) + 1)
+                ELSE NULL
+              END AS item_description,
+              p.unit
        FROM purchase_order_items poi
        LEFT JOIN products p ON p.id = poi.product_id
        WHERE poi.purchase_order_id = $1 ORDER BY poi.id`,
@@ -1486,10 +1495,19 @@ export function createRepository({ query, one, withTransaction }, mail) {
             const quantity = round3(item.quantity)
             const unitCost = round2(item.unit_cost)
             if (!(quantity > 0)) throw httpError('Purchase quantities must be greater than zero.')
-            if (!item.product_id) throw httpError('Every purchase line needs a product.')
+            const explicitName = text(item.item_name)
+            const itemName = item.product_id ? '' : explicitName || text(item.description)
+            if (!item.product_id && !itemName) {
+              throw httpError('Enter a name for every manual purchase item.')
+            }
+            if (!item.product_id && !(unitCost > 0)) {
+              throw httpError('Enter a cost for every manual purchase item.')
+            }
             return {
-              product_id: item.product_id,
-              description: text(item.description) || null,
+              product_id: item.product_id || null,
+              description: item.product_id
+                ? text(item.description) || null
+                : manualDescription(itemName, explicitName ? text(item.description) : ''),
               quantity,
               unit_cost: unitCost,
               line_total: round2(quantity * unitCost),

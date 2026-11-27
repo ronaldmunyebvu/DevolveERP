@@ -88,8 +88,15 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
   async function save(event) {
     event.preventDefault()
     setError('')
-    if (!form.items.some((item) => item.product_id && Number(item.quantity) > 0)) {
-      setError('Add at least one product and quantity.')
+    const usable = (item) =>
+      (item.product_id || (item.is_manual && String(item.name || '').trim())) &&
+      Number(item.quantity) > 0
+    if (!form.items.some(usable)) {
+      setError('Add at least one product or manual item and a quantity.')
+      return
+    }
+    if (form.items.some((item) => usable(item) && item.is_manual && !(Number(item.unit_cost) > 0))) {
+      setError('Enter a cost for each manual item.')
       return
     }
     setBusy(true)
@@ -100,9 +107,10 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
         tax_rate: form.include_tax ? Number(form.tax_rate) || 0 : 0,
         include_tax: form.include_tax,
         items: form.items
-          .filter((item) => item.product_id && Number(item.quantity) > 0)
+          .filter(usable)
           .map((item) => ({
-            product_id: item.product_id,
+            product_id: item.product_id || null,
+            item_name: item.is_manual ? String(item.name || '').trim() : '',
             description: item.description,
             quantity: Number(item.quantity),
             unit_cost: Number(item.unit_cost) || 0,
@@ -124,7 +132,7 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
       open={open}
       onClose={onClose}
       title="New purchase"
-      description="Record stock bought from a supplier. Receiving it posts the stock and the journal."
+      description="Record stock and manual items bought from a supplier. Receiving it posts product stock and the journal."
       size="xl"
       footer={
         <>
@@ -187,7 +195,7 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
 
         {form.status === 'received' && (
           <Alert tone="warning" icon={AlertTriangle}>
-            Saving as received will immediately add these quantities to stock and post the purchase journal.
+            Saving as received will add product quantities to stock and post the purchase journal.
           </Alert>
         )}
 
@@ -200,6 +208,7 @@ function PurchaseFormModal({ open, onClose, suppliers, products, locations, repo
             priceKey="unit_cost"
             priceLabel="Unit cost"
             showExpiry
+            allowManual
             currency={currency}
           />
         </div>
@@ -334,18 +343,25 @@ function PurchaseDetailModal({ open, onClose, purchaseId, repo, onChanged, onDel
               </tr>
             </thead>
             <tbody>
-              {data.items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <p className="font-medium text-ink-800">{item.product_name}</p>
-                    <p className="text-[11px] text-ink-500">{item.sku}</p>
-                  </td>
-                  <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
-                  <td className="text-right tabular-nums">{formatMoney(item.unit_cost, currency)}</td>
-                  <td>{item.expiry_date ? formatDate(item.expiry_date) : '—'}</td>
-                  <td className="text-right tabular-nums">{formatMoney(item.line_total, currency)}</td>
-                </tr>
-              ))}
+              {data.items.map((item) => {
+                const detail = item.item_description ?? item.description
+                return (
+                  <tr key={item.id}>
+                    <td>
+                      <p className="font-medium text-ink-800">{item.product_name || detail || 'Item'}</p>
+                      {item.sku && <p className="text-[11px] text-ink-500">{item.sku}</p>}
+                      {detail && detail !== item.product_name && (
+                        <p className="text-[11px] text-ink-500">{detail}</p>
+                      )}
+                      {!item.product_id && <p className="text-[11px] text-ink-500">Manual item</p>}
+                    </td>
+                    <td className="text-right tabular-nums">{formatQuantity(item.quantity)}</td>
+                    <td className="text-right tabular-nums">{formatMoney(item.unit_cost, currency)}</td>
+                    <td>{item.expiry_date ? formatDate(item.expiry_date) : '—'}</td>
+                    <td className="text-right tabular-nums">{formatMoney(item.line_total, currency)}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </TableWrapper>
 
