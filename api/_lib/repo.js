@@ -307,6 +307,41 @@ export function createRepository({ query, one, withTransaction }, mail) {
     })
   }
 
+  async function reverseInvoicePayments(tx, ctx, invoice) {
+    const payments = await tx.query(
+      `SELECT * FROM payments WHERE company_id = $1 AND invoice_id = $2 ORDER BY id`,
+      [ctx.companyId, invoice.id],
+    )
+    for (const payment of payments) {
+      const amount = number(payment.amount)
+      if (!(amount > 0)) continue
+      await postJournal(tx, ctx, {
+        date: today(),
+        reference: payment.payment_number,
+        description: `Reverse receipt ${payment.payment_number} for ${invoice.invoice_number}`,
+        sourceType: 'payment_void',
+        sourceId: payment.id,
+        lines: [
+          { account_name: cashAccount(payment.method), debit: 0, credit: amount },
+          { account_name: 'Accounts Receivable', debit: amount, credit: 0 },
+        ],
+      })
+      await createCashbookEntry(tx, ctx, {
+        date: today(),
+        type: 'payment',
+        category: 'Sales Refund',
+        description: `Reversal of receipt ${payment.payment_number} for ${invoice.invoice_number}`,
+        amount,
+        method: payment.method,
+        reference: payment.payment_number,
+        sourceType: 'payment_void',
+        sourceId: payment.id,
+        notes: `Reversed when ${invoice.invoice_number} was cancelled`,
+      })
+    }
+    return payments
+  }
+
   async function insertInvoice(tx, ctx, payload, existing = null) {
     const customer = await customerSnapshot(tx, ctx.companyId, payload.customer_id, {
       name: payload.customer_name,
@@ -362,7 +397,11 @@ export function createRepository({ query, one, withTransaction }, mail) {
     })
 
     const requestedPaid = Math.max(0, round2(payload.amount_paid))
-    const amountPaid = existing ? 0 : Math.min(requestedPaid, totals.total_amount)
+    const existingPaid = existing ? number(existing.amount_paid) : 0
+    if (existing && existingPaid > totals.total_amount + 0.01) {
+      throw httpError('Invoice total cannot be less than the amount already paid.')
+    }
+    const amountPaid = existing ? existingPaid : Math.min(requestedPaid, totals.total_amount)
     const issueDate = dateValue(payload.issue_date, today())
     // Walk-in sales are settled on the spot, so the due date defaults to the
     // issue date. Registered customers keep an explicit due date (or none).
@@ -377,10 +416,10 @@ export function createRepository({ query, one, withTransaction }, mail) {
            customer_email = $5, customer_phone = $6, customer_address = $7,
            location_id = $8, status = $9, issue_date = $10, due_date = $11,
            subtotal = $12, discount = $13, tax_rate = $14, include_tax = $15,
-           is_delivery_note = $16, tax_amount = $17, total_amount = $18,
-           amount_paid = 0, balance = $19, notes = $20, updated_at = now()
-         WHERE id = $1 AND company_id = $21
-         RETURNING *`,
+            is_delivery_note = $16, tax_amount = $17, total_amount = $18,
+            amount_paid = $19, balance = $20, notes = $21, updated_at = now()
+          WHERE id = $1 AND company_id = $22
+          RETURNING *`,
         [
           existing.id,
           text(payload.purchase_order_number) || null,
@@ -390,7 +429,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
           customer.phone,
           customer.address,
           location.id,
-          invoiceStatus(totals.total_amount, 0),
+          invoiceStatus(totals.total_amount, amountPaid),
           issueDate,
           due,
           totals.subtotal,
@@ -400,7 +439,8 @@ export function createRepository({ query, one, withTransaction }, mail) {
           payload.is_delivery_note === true || payload.is_delivery_note === 'true',
           totals.tax_amount,
           totals.total_amount,
-          totals.total_amount,
+          amountPaid,
+          Math.max(0, round2(totals.total_amount - amountPaid)),
           text(payload.notes) || null,
           ctx.companyId,
         ],
@@ -1739,9 +1779,6 @@ export function createRepository({ query, one, withTransaction }, mail) {
           )
           if (!existing) throw httpError('Invoice not found.', 404)
           if (existing.status === 'void') throw httpError('Void invoices cannot be edited.')
-          if (number(existing.amount_paid) > 0) {
-            throw httpError('Invoices with payments cannot be edited. Reverse the payments first.')
-          }
           return insertInvoice(tx, ctx, payload, existing)
         })
       },
@@ -1777,9 +1814,7 @@ export function createRepository({ query, one, withTransaction }, mail) {
           )
           if (!invoice) throw httpError('Invoice not found.', 404)
           if (invoice.status === 'void') throw httpError('This invoice is already void.')
-          if (number(invoice.amount_paid) > 0) {
-            throw httpError('This invoice has payments. Reverse the payments before voiding it.')
-          }
+          await reverseInvoicePayments(tx, ctx, invoice)
           const items = await tx.query(`SELECT * FROM invoice_items WHERE invoice_id = $1`, [
             invoice.id,
           ])

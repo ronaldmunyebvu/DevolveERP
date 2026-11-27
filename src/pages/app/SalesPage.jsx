@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Trash2,
   Wallet,
+  XCircle,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
@@ -184,6 +185,10 @@ export function SaleFormModal({
       setError('Choose the location the goods leave from.')
       return
     }
+    if (editing && editInvoice && Number(editInvoice.amount_paid || 0) > totals.total + 0.01) {
+      setError('Invoice total cannot be less than the amount already paid.')
+      return
+    }
     setBusy(true)
     try {
       const payload = {
@@ -259,7 +264,7 @@ export function SaleFormModal({
         {error && <Alert tone="danger">{error}</Alert>}
         {editing && (
           <Alert tone="info">
-            Existing payments are not changed here. Use “Record payment” after saving if you need to adjust them.
+            Existing payments are preserved. The new total cannot be less than the amount already paid.
           </Alert>
         )}
         <div className="grid gap-3 sm:grid-cols-3">
@@ -535,7 +540,7 @@ export function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onV
     setVoidBusy(true)
     try {
       await repo.sales.remove({ id: invoiceId })
-      toast.success('Invoice voided and stock returned.')
+      toast.success('Invoice cancelled, payments reversed and stock returned.')
       setConfirmVoid(false)
       onVoid()
       onClose()
@@ -559,10 +564,10 @@ export function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onV
         footer={
           data ? (
             <>
-              {data.status !== 'void' && Number(data.amount_paid) <= 0 && (
+              {data.status !== 'void' && (
                 <Button variant="secondary" className="text-red-600" onClick={() => setConfirmVoid(true)}>
                   <Trash2 size={15} />
-                  Void
+                  Cancel
                 </Button>
               )}
               <Button variant="secondary" onClick={onClose}>
@@ -729,9 +734,9 @@ export function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onV
         onClose={() => setConfirmVoid(false)}
         onConfirm={voidInvoice}
         loading={voidBusy}
-        title="Void this invoice?"
-        message="The invoice will be marked void, the stock will be returned and a reversing journal posted. Invoices with payments cannot be voided."
-        confirmLabel="Void invoice"
+        title="Cancel this invoice?"
+        message="The invoice will be marked void, product stock returned, payments reversed in the cashbook and journals, and the balance cleared."
+        confirmLabel="Cancel invoice"
       />
     </>
   )
@@ -739,12 +744,15 @@ export function SaleDetailModal({ open, onClose, invoiceId, repo, onChanged, onV
 
 export default function SalesPage() {
   const repo = useRepository()
+  const toast = useToast()
   const { company } = useAuth()
   const currency = company?.currency || 'USD'
   const [searchParams, setSearchParams] = useSearchParams()
   const [filters, setFilters] = useState({ search: '', status: '' })
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [cancelling, setCancelling] = useState(null)
+  const [cancelBusy, setCancelBusy] = useState(false)
   const [viewing, setViewing] = useState(null)
 
   const sales = useAsyncData(() => (repo ? repo.sales.list() : null), [repo], { enabled: Boolean(repo) })
@@ -809,6 +817,21 @@ export default function SalesPage() {
   function closeForm() {
     setFormOpen(false)
     setEditingId(null)
+  }
+
+  async function cancelInvoice() {
+    if (!cancelling) return
+    setCancelBusy(true)
+    try {
+      await repo.sales.remove({ id: cancelling.id })
+      toast.success(`Invoice ${cancelling.invoice_number} cancelled.`)
+      setCancelling(null)
+      refreshAll()
+    } catch (cause) {
+      toast.error(cause.message)
+    } finally {
+      setCancelBusy(false)
+    }
   }
 
   function refreshAll() {
@@ -961,16 +984,23 @@ export default function SalesPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        title={
-                          sale.status === 'void' || Number(sale.amount_paid) > 0
-                            ? 'Paid or void invoices cannot be edited'
-                            : 'Edit'
-                        }
-                        disabled={sale.status === 'void' || Number(sale.amount_paid) > 0}
+                        title={sale.status === 'void' ? 'Void invoices cannot be edited' : 'Edit'}
+                        disabled={sale.status === 'void'}
                         onClick={() => openEdit(sale.id)}
                       >
                         <Pencil size={16} />
                       </Button>
+                      {sale.status !== 'void' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Cancel invoice"
+                          className="text-red-500 hover:bg-red-50"
+                          onClick={() => setCancelling(sale)}
+                        >
+                          <XCircle size={16} />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" title="View" onClick={() => setViewing(sale.id)}>
                         <Eye size={16} />
                       </Button>
@@ -1006,6 +1036,16 @@ export default function SalesPage() {
         company={company}
         onChanged={refreshAll}
         onVoid={refreshAll}
+      />
+
+      <ConfirmDialog
+        open={Boolean(cancelling)}
+        onClose={() => setCancelling(null)}
+        onConfirm={cancelInvoice}
+        loading={cancelBusy}
+        title="Cancel this invoice?"
+        message="The invoice will be marked void, product stock returned, payments reversed in the cashbook and journals, and the balance cleared."
+        confirmLabel="Cancel invoice"
       />
     </div>
   )
